@@ -23,17 +23,25 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='msp output from MS-Dial. Multiple files from the same experiment can be input, e.g. positive and negative mode.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
-                    help='Minimum observed retention time, used to filter peaks eluting in the dead volume.')
+                    help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume. Default = 0.')
+parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.2, type = float,
+                    help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2.')
+parser.add_argument('-h', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
+                    help='Putative IDs with a final model score above this value are labeled good IDs. Default = 0.8.')
 parser.add_argument('-m', '--model', action = 'store', required = False, default = '/model.dill',
-                    help='Pickled random forest model file created by training script, if not provided the default model will be used.')
+                    help='Pickled random forest model file created by training script. In the docker version if the file is not provided the default model will be used.')
 parser.add_argument('-p', '--plots', action = 'store_true', required = False,
-                    help='Generate plots to troubleshoot poor predictions.')
+                    help='Generate plots to troubleshoot poor predictions. Default is no plots.')
 parser.add_argument('-o', '--out_dir', action = 'store', required = True,
                     help='Directory for all outputs to be written to.')
 args = parser.parse_args()
 
 with open(args.model, 'rb') as pkl:
     pre_model, model = dill.load(pkl)
+
+
+cut_high = args.cutoff_high #above this score lipid IDs are classed as good
+cut_low = args.cutoff_low #below this score lipid IDs are classed as bad
 
 ###### function and object setup
 #predicts the unit normalized intensities of the first three isotopic peaks for a particular formula
@@ -102,8 +110,6 @@ predictor_cols =  ['Dot product', 'S/N average', 'iso_mse', 'mz_error', 'rt_erro
 lipid_data['score'] = model.predict_proba(lipid_data[predictor_cols])[:,1]
 
 #write outputs
-cut_high = 0.8
-cut_low = 0.2
 lipid_data['pred_label'] = [1 if s > cut_high else 0 if s < cut_low else -1 for s in lipid_data['score']]
 lipid_data[lipid_data['pred_label'] == 1].to_csv(f'{args.out_dir}/good_lipids.tsv', 
                                                                sep = '\t', index = False)

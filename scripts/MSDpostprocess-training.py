@@ -33,14 +33,19 @@ parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='Modified msp output from MS-Dial, see README for details.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
                     help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume.')
+parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.2, type = float,
+                    help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2')
+parser.add_argument('-h', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
+                    help='Putative IDs with a final model score above this value are labeled good IDs. Default = 0.8')
 parser.add_argument('-o', '--out_dir', action = 'store', required = True,
                     help='Directory for all outputs to be written to.')
 args = parser.parse_args()
 
 ###### function and object setup
 rng = np.random.default_rng(1234)
-cut_high = 0.8 # above this score lipid IDs are classed as good
-cut_low = 0.2# below this score lipid IDs are classed as bad
+
+cut_high = args.cutoff_high #above this score lipid IDs are classed as good
+cut_low = args.cutoff_low #below this score lipid IDs are classed as bad
 #between the above two scores lipid IDs are set aside for manual reanalysis
 
 #predicts the unit normalized intensities of the first three isotopic peaks for a particular formula
