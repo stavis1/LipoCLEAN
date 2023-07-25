@@ -26,7 +26,7 @@ parser.add_argument('-r', '--min_rt', action = 'store', required = False, defaul
                     help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume. Default = 0.')
 parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.2, type = float,
                     help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2.')
-parser.add_argument('-h', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
+parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
                     help='Putative IDs with a final model score above this value are labeled good IDs. Default = 0.8.')
 parser.add_argument('-m', '--model', action = 'store', required = False, default = '/model.dill',
                     help='Pickled random forest model file created by training script. In the docker version if the file is not provided the default model will be used.')
@@ -119,12 +119,15 @@ lipid_data[lipid_data['pred_label'] == 0].to_csv(f'{args.out_dir}/bad_lipids.tsv
                                                               sep = '\t', index = False)
 
 if args.plots:
+    import os
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from matplotlib import cm
     from itertools import combinations
-
+    
+    os.mkdir(f'{args.out_dir}/inference_QC')
+    
     def get_colors(vals):
         low = min(vals)
         high = max(vals)
@@ -154,24 +157,39 @@ if args.plots:
     ax.set_aspect(abs(x1-x0)/abs(y1-y0))
     ax.set_ylabel('Reference RT')
     ax.set_xlabel('Observed RT')
-    fig.savefig(f'{args.out_dir}/RT_alignment.png', 
+    fig.savefig(f'{args.out_dir}/inference_QC/RT_alignment.svg', 
                 dpi = 1000, bbox_inches = 'tight')
     
+    log_pred = {'Dot product':False, 'S/N average':True, 'iso_mse':True, 'mz_error':False, 'rt_error':False}
+
     colors = get_colors(lipid_data['score'])
     sm = get_sm(lipid_data['score'])
     for pair in combinations(predictor_cols, 2):
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize = (6,6))
         ax.scatter(lipid_data[pair[0]], lipid_data[pair[1]],
                    s = 1, color = colors, marker = '.')
-        y0,y1 = ax.get_ylim()
-        x0,x1 = ax.get_xlim()
-        ax.set_aspect(abs(x1-x0)/abs(y1-y0))
+        if log_pred[pair[0]]:
+            ax.set_xscale('log')
+        elif log_pred[pair[1]]:
+            ax.set_yscale('log')
         ax.set_facecolor('lightgrey')
         ax.set_ylabel(pair[1])
         ax.set_xlabel(pair[0])
         clb = fig.colorbar(sm, ax = ax, location = 'right')
         clb.set_label('Score')
-        fig.savefig(f'{args.out_dir}/{pair[0].replace("/","")}-{pair[1].replace("/","")}.png', 
+        fig.savefig(f'{args.out_dir}/inference_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}.svg', 
                     dpi = 1000, bbox_inches = 'tight')
         plt.close('all')
 
+    
+    #individual predictors correlation with final scores
+    for predictor in predictor_cols:
+        fig, ax = plt.subplots(figsize = (6,6))
+        ax.scatter(lipid_data[predictor],
+                   lipid_data['score'],
+                   s = 1, c = 'k', marker = '.')
+        if log_pred[predictor]:
+            ax.set_xscale('log')
+        ax.set_ylabel('Score')
+        ax.set_xlabel(predictor)
+        fig.savefig(f'{args.out_dir}/inference_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
