@@ -19,6 +19,7 @@ from scipy.optimize import least_squares
 import statsmodels.api as sm
 from sklearn.ensemble import GradientBoostingClassifier as GBC
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_auc_score
 
 import matplotlib
 matplotlib.use('Agg')
@@ -309,4 +310,45 @@ for predictor in predictor_cols:
     ax.set_xlabel(predictor)
     fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
 
- 
+def TPR(tn,fp,fn,tp):
+    divisor = tp + fn
+    if divisor == 0:
+        return 0
+    else:
+        return tp/divisor
+
+def FPR(tn,fp,fn,tp):
+    divisor = fp + tn
+    if divisor == 0:
+        return 0
+    else:
+        return fp/divisor
+
+for train,data in enumerate([lipid_data[lipid_data['test_set']],lipid_data[np.logical_not(lipid_data['test_set'])]]):
+    aucroc = roc_auc_score(data['label'], data['score'])
+    
+    tprs = [0]
+    fprs = [0]
+    for cut in sorted(list(set(data['score'])), reverse=True):
+        calls = [yhat >= cut for yhat in data['score']]
+        tn,fp,fn,tp = confusion_matrix(data['label'], calls).flatten()
+        tprs.append(TPR(tn,fp,fn,tp))
+        fprs.append(FPR(tn,fp,fn,tp))
+    
+    tprs.append(1)
+    fprs.append(1)
+    
+    fig, ax = plt.subplots(figsize = (6,6))
+    ax.plot(fprs,tprs,'-k', linewidth = 1)
+    ax.plot([0,1],[0,1], '--r', linewidth = 0.5)
+    y0,y1 = ax.get_ylim()
+    x0,x1 = ax.get_xlim()
+    ax.set_aspect(abs(x1-x0)/abs(y1-y0))
+    ax.set_ylim(-.001,1.001)
+    ax.set_xlim(-.001,1.001)
+    ax.set_facecolor('lightgrey')
+    ax.set_ylabel('True Postiive Rate')
+    ax.set_xlabel('False Postiive Rate')
+    ax.set_title(f'{"Train" if train else "Test"} Set ROC')
+    ax.annotate(f'AUC: {"%.2f"%(aucroc)}', (0.5,0.5), ha='left', va='top')
+    fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.svg', bbox_inches = 'tight')
