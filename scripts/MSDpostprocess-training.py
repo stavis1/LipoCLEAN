@@ -76,6 +76,22 @@ def get_sm(vals):
     sm.set_clim(vmin = min(vals), vmax = max(vals))
     return sm
 
+#True positive rate for ROC plots
+def TPR(tn,fp,fn,tp):
+    divisor = tp + fn
+    if divisor == 0:
+        return 0
+    else:
+        return tp/divisor
+
+#False positive rate for ROC plots
+def FPR(tn,fp,fn,tp):
+    divisor = fp + tn
+    if divisor == 0:
+        return 0
+    else:
+        return fp/divisor
+
 os.mkdir(f'{args.out_dir}/training_QC')
 
 ###### initial data processing
@@ -234,7 +250,7 @@ for exp in set(lipid_data['experiment']):
                 bbox_inches = 'tight')
     plt.close('all')
 
-log_pred = {'Dot product':False, 'S/N average':True, 'iso_mse':True, 'mz_error':False, 'rt_error':False}
+log_pred = {'Dot product':False, 'S/N average':True, 'iso_mse':True, 'mz_error':False, 'rt_error':False} #whether to plot each predictor on a log scale
 #scatterplots of all possible pairs of predictors colored by the final model score
 colors = get_colors(lipid_data['score'])
 sm = get_sm(lipid_data['score'])
@@ -310,23 +326,12 @@ for predictor in predictor_cols:
     ax.set_xlabel(predictor)
     fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
 
-def TPR(tn,fp,fn,tp):
-    divisor = tp + fn
-    if divisor == 0:
-        return 0
-    else:
-        return tp/divisor
-
-def FPR(tn,fp,fn,tp):
-    divisor = fp + tn
-    if divisor == 0:
-        return 0
-    else:
-        return fp/divisor
-
-for train,data in enumerate([lipid_data[lipid_data['test_set']],lipid_data[np.logical_not(lipid_data['test_set'])]]):
+#ROC plots
+for train,data in enumerate([lipid_data[lipid_data['test_set']],
+                             lipid_data[np.logical_not(lipid_data['test_set'])]]):
     aucroc = roc_auc_score(data['label'], data['score'])
     
+    #calculate the ROC curve
     tprs = [0]
     fprs = [0]
     for cut in sorted(list(set(data['score'])), reverse=True):
@@ -334,9 +339,9 @@ for train,data in enumerate([lipid_data[lipid_data['test_set']],lipid_data[np.lo
         tn,fp,fn,tp = confusion_matrix(data['label'], calls).flatten()
         tprs.append(TPR(tn,fp,fn,tp))
         fprs.append(FPR(tn,fp,fn,tp))
-    
     tprs.append(1)
     fprs.append(1)
+    
     
     fig, ax = plt.subplots(figsize = (6,6))
     ax.plot(fprs,tprs,'-k', linewidth = 1)
