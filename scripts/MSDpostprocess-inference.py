@@ -25,7 +25,7 @@ parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='msp output from MS-Dial. Multiple files from the same experiment can be input, e.g. positive and negative mode.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
                     help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume. Default = 0.')
-parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.2, type = float,
+parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
                     help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2.')
 parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
                     help='Putative IDs with a final model score above this value are labeled good IDs. Default = 0.8.')
@@ -190,8 +190,25 @@ if args.plots:
         ax.scatter(lipid_data[predictor],
                    lipid_data['score'],
                    s = 1, c = 'k', marker = '.')
+        xlim = [x if x > 0 else min(lipid_data[predictor]) for x in ax.get_xlim()]  if log_pred[predictor] else ax.get_xlim()
+        ax.plot(xlim, [cut_low]*2, '-b', linewidth = .5)
+        ax.plot(xlim, [cut_high]*2, '-b', linewidth = .5)
         if log_pred[predictor]:
             ax.set_xscale('log')
+        ax.set_xlim(xlim)
         ax.set_ylabel('Score')
         ax.set_xlabel(predictor)
         fig.savefig(f'{args.out_dir}/inference_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
+
+    #score distribuiton
+    fig, ax = plt.subplots()
+    ax.hist(lipid_data['score'], bins = 80, color = 'k')
+    ax.set_xlim(0,1)
+    ylim = ax.get_ylim()
+    ax.plot([cut_low]*2, ylim, '-b', linewidth = 0.5)
+    ax.plot([cut_high]*2, ylim, '-b', linewidth = 0.5)
+    ax.set_ylim(ylim)
+    ax.set_xlabel('Final Model Scores')
+    ax.set_ylabel('Count')
+    fig.savefig(f'{args.out_dir}/inference_QC/ScoresDistribution.svg', bbox_inches = 'tight')
+

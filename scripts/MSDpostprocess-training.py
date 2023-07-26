@@ -35,7 +35,7 @@ parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='Modified msp output from MS-Dial, see README for details.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
                     help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume.')
-parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.2, type = float,
+parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
                     help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2')
 parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
                     help='Putative IDs with a final model score above this value are labeled good IDs. Default = 0.8')
@@ -321,9 +321,15 @@ for predictor in predictor_cols:
     ax.scatter(lipid_data[lipid_data['label'] == 0][predictor],
                lipid_data[lipid_data['label'] == 0]['score'],
                s = 1, c = 'r', marker = '.', label = 'False')
-    ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
+    xlim = [x if x > 0 else min(lipid_data[predictor]) for x in ax.get_xlim()]  if log_pred[predictor] else ax.get_xlim()
+    ax.plot(xlim,
+            [cut_low]*2, '-b', linewidth = .5)
+    ax.plot(xlim,
+            [cut_high]*2, '-b', linewidth = .5, label = 'Cutoffs')
     if log_pred[predictor]:
         ax.set_xscale('log')
+    ax.set_xlim(xlim)
+    ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
     ax.set_ylabel('Score')
     ax.set_xlabel(predictor)
     fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
@@ -359,3 +365,22 @@ for train,data in enumerate([lipid_data[lipid_data['test_set']],
     ax.set_title(f'{"Train" if train else "Test"} Set ROC')
     ax.annotate(f'AUC: {"%.2f"%(aucroc)}', (0.5,0.5), ha='left', va='top')
     fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.svg', bbox_inches = 'tight')
+
+#score distributions of good and bad lipids
+bins = np.linspace(min(lipid_data['score']),max(lipid_data['score']),80)
+fig, ax = plt.subplots()
+ax.hist(lipid_data[lipid_data['label'] == 1]['score'], bins = bins, color = 'k', alpha = 0.5, label = 'Good Lipids')
+ax.hist(lipid_data[lipid_data['label'] == 0]['score'], bins = bins, color = 'r', alpha = 0.5, label = 'Bad Lipids')
+ax.set_xlim(0,1)
+ylim = ax.get_ylim()
+ax.plot([cut_low]*2, ylim, '-b', linewidth = 0.5)
+ax.plot([cut_high]*2, ylim, '-b', linewidth = 0.5, label = 'Cutoffs')
+ax.set_ylim(ylim)
+ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
+ax.set_xlabel('Final Model Scores')
+ax.set_ylabel('Count')
+fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.svg', bbox_inches = 'tight')
+
+
+
+
