@@ -309,7 +309,7 @@ for pair in combinations(predictor_cols, 2):
     fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.svg', 
                 bbox_inches = 'tight')
     plt.close('all')
-
+    
 #individual predictors correlation with final scores
 for predictor in predictor_cols:
     fig, ax = plt.subplots(figsize = (6,6))
