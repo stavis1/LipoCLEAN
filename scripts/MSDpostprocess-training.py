@@ -15,7 +15,8 @@ import dill
 import pandas as pd
 import numpy as np
 from brainpy import isotopic_variants
-from scipy.optimize import least_squares
+from scipy.optimize import minimize
+from scipy.optimize import Bounds
 import statsmodels.api as sm
 from sklearn.ensemble import GradientBoostingClassifier as GBC
 from sklearn.metrics import confusion_matrix
@@ -60,8 +61,9 @@ def iso_packet(formula):
 def iso_mse(observed, expected):
     obs = np.asarray([int(i) for i in re.findall(r':(\d+)',observed)])
     exp = np.asarray(expected)
-    results = least_squares(lambda x: np.mean((obs/x - exp)**2), x0 = sum(obs), bounds = (1e-9, np.inf))
+    results = minimize(lambda x: np.mean((obs/x[0] - exp)**2), x0 = [sum(obs)], bounds = Bounds(lb = 1e-9))
     return np.mean((obs/results.x - exp)**2)
+
 
 #returns a list of colors based on some scalar value
 def get_colors(vals):
