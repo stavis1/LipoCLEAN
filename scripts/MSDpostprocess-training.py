@@ -60,7 +60,7 @@ def iso_packet(formula):
 def iso_mse(observed, expected):
     obs = np.asarray([int(i) for i in re.findall(r':(\d+)',observed)])
     exp = np.asarray(expected)
-    results = least_squares(lambda x: np.mean((obs/x - exp)**2), x0 = sum(obs))
+    results = least_squares(lambda x: np.mean((obs/x - exp)**2), x0 = sum(obs), bounds = (1e-9, np.inf))
     return np.mean((obs/results.x - exp)**2)
 
 #returns a list of colors based on some scalar value
