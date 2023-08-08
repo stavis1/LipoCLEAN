@@ -11,22 +11,6 @@ from functools import cache
 import argparse
 from itertools import combinations
 
-import dill
-import pandas as pd
-import numpy as np
-from brainpy import isotopic_variants
-from scipy.optimize import minimize
-from scipy.optimize import Bounds
-import statsmodels.api as sm
-from sklearn.ensemble import GradientBoostingClassifier as GBC
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import roc_auc_score
-
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib import cm
-
 ###### input data
 parser = argparse.ArgumentParser(
                     prog='MS-Dial lipid postprocessor inferenece',
@@ -42,6 +26,22 @@ parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, d
 parser.add_argument('-o', '--out_dir', action = 'store', required = True,
                     help='Directory for all outputs to be written to.')
 args = parser.parse_args()
+
+import dill
+import pandas as pd
+import numpy as np
+from brainpy import isotopic_variants
+from scipy.optimize import minimize
+from scipy.optimize import Bounds
+import statsmodels.api as sm
+from sklearn.ensemble import GradientBoostingClassifier as GBC
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_auc_score
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib import cm
 
 ###### function and object setup
 rng = np.random.default_rng(1234)

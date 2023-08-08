@@ -9,14 +9,6 @@ import re
 from functools import cache
 import argparse
 
-import dill
-import pandas as pd
-import numpy as np
-from brainpy import isotopic_variants
-from scipy.optimize import minimize
-from scipy.optimize import Bounds
-import statsmodels.api as sm
-
 ###### input data
 parser = argparse.ArgumentParser(
                     prog='MS-Dial lipid postprocessor inferenece',
@@ -36,15 +28,22 @@ parser.add_argument('-p', '--plots', action = 'store_true', required = False,
 parser.add_argument('-o', '--out_dir', action = 'store', required = True,
                     help='Directory for all outputs to be written to.')
 args = parser.parse_args()
-
-with open(args.model, 'rb') as pkl:
-    mz_model, rt_model, model = dill.load(pkl)
-
-
 cut_high = args.cutoff_high #above this score lipid IDs are classed as good
 cut_low = args.cutoff_low #below this score lipid IDs are classed as bad
 
+
+import dill
+import pandas as pd
+import numpy as np
+from brainpy import isotopic_variants
+from scipy.optimize import minimize
+from scipy.optimize import Bounds
+import statsmodels.api as sm
+
 ###### function and object setup
+with open(args.model, 'rb') as pkl:
+    mz_model, rt_model, model = dill.load(pkl)
+
 #predicts the unit normalized intensities of the first three isotopic peaks for a particular formula
 @cache
 def iso_packet(formula):
