@@ -145,7 +145,7 @@ mz_features = ['iso_mse', 'Dot product', 'S/N average']
 mz_model = GBC(n_estimators = 40).fit(lipid_data[mz_features], lipid_data['label'])
 lipid_data['mz_prepred'] = mz_model.predict(lipid_data[mz_features])
 test_set['mz_prepred'] = mz_model.predict(test_set[mz_features])
-mz_set = lipid_data[lipid_data['mzModel_pred'] == 1]
+mz_set = lipid_data[lipid_data['mz_prepred'] == 1]
 
 #store initial m/z errors for plotting
 init_deltas = lipid_data[mz_cols].to_numpy() - np.asarray([lipid_data['Reference m/z']]*len(mz_cols)).T
@@ -285,11 +285,11 @@ for exp in set(lipid_data['experiment']):
     pts = sorted(list(zip(lipids['Average Rt(min)'], lipids['pred_rt'])), key = lambda x: x[0])
     
     fig, ax = plt.subplots()
-    df = lipids[[p == 1 for p in lipids['prepred']]]
+    df = lipids[[p == 1 for p in lipids['rt_prepred']]]
     ax.scatter(df['Average Rt(min)'],
                df['Reference RT'],
                s =1 , c= 'k', marker = '.', label = 'in regression set')
-    df = lipids[[p == 0 for p in lipids['prepred']]]
+    df = lipids[[p == 0 for p in lipids['rt_prepred']]]
     ax.scatter(df['Average Rt(min)'],
                df['Reference RT'],
                s =1 , c= 'r', marker = '.', label = 'not in regression set')

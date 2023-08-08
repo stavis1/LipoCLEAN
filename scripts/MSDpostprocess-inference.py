@@ -97,8 +97,8 @@ if any(lipid_data[c].dtype.kind != 'f' for c in mz_cols):
 lipid_data['iso_mse'] = [iso_mse(o,iso_packet(f)) for o,f in zip(lipid_data['MS1 isotopic spectrum'],lipid_data['Formula'])]
 
 #initial prediction of good lipids for fitting the m/z correction
-predictor_cols = ['Dot product', 'S/N average', 'iso_mse', 'mz_error']
-lipid_data['rt_prepred'] = rt_model.predict(lipid_data[predictor_cols])
+predictor_cols = ['iso_mse', 'Dot product', 'S/N average']
+lipid_data['rt_prepred'] = mz_model.predict(lipid_data[predictor_cols])
 mz_set = lipid_data[lipid_data['rt_prepred'] == 1]
 
 #store initial m/z errors for plotting
@@ -256,6 +256,6 @@ if args.plots:
     ax.legend()
     ax.set_xlabel('Delta m/z')
     fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/inferecne_QC/mz_correction.svg', bbox_inches = 'tight')
+    fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.svg', bbox_inches = 'tight')
 
 
