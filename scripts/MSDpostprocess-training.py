@@ -123,6 +123,7 @@ lipid_data.drop(bad_idx, inplace=True)
 
 #identify columns containing m/z values
 mz_cols = list(lipid_data.columns)[list(lipid_data.columns).index('MS/MS spectrum')+1:]
+mz_cols.remove('experiment')
 if any(lipid_data[c].dtype.kind != 'f' for c in mz_cols):
     print('Potentially invalid data types in m/z columns. This could be due to non m/z columns being inserted after "MS/MS spectrum". Please check', flush = True)
     print('m/z columns:\n' + '\n'.join(mz_cols))
