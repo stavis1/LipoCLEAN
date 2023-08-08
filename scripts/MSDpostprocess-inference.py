@@ -25,6 +25,8 @@ parser.add_argument('-m', '--model', action = 'store', required = False, default
                     help='Pickled random forest model file created by training script. In the docker version if the file is not provided the default model will be used.')
 parser.add_argument('-p', '--plots', action = 'store_true', required = False,
                     help='Generate plots to troubleshoot poor predictions. Default is no plots.')
+parser.add_argument('-n', '--ppm', action = 'store_true', required = False,
+                    help='Use m/z error in units of ppm. Default is Daltons.')
 parser.add_argument('-o', '--out_dir', action = 'store', required = True,
                     help='Directory for all outputs to be written to.')
 args = parser.parse_args()
@@ -108,12 +110,16 @@ if args.plots:
 
 #calculate the midmean of m/z errors within the mz_model prefiltered set on a per file basis
 mz_deltas = mz_set[mz_cols].to_numpy() - np.asarray([mz_set['Reference m/z']]*len(mz_cols)).T
+if args.ppm:
+    mz_deltas = (mz_deltas / np.asarray([np.nanmean(mz_set[mz_cols], axis = 1)]*mz_deltas.shape[1]).T) * 1e7
 quartiles = np.nanquantile(mz_deltas, q = [0.75, 0.25], axis = 0)
 midmeans = np.nanmean(mz_deltas, axis = 0, where = np.logical_and(np.less_equal(mz_deltas, [quartiles[0,:]]*mz_set.shape[0]),
                                                                   np.greater_equal(mz_deltas, [quartiles[1,:]]*mz_set.shape[0])))
 
 #apply the correction
 mz_deltas = lipid_data[mz_cols].to_numpy() - np.asarray([lipid_data['Reference m/z']]*len(mz_cols)).T
+if args.ppm:
+    mz_deltas = (mz_deltas / np.asarray([np.nanmean(lipid_data[mz_cols], axis = 1)]*mz_deltas.shape[1]).T) * 1e7
 mz_deltas = mz_deltas - np.asarray([midmeans]*lipid_data.shape[0])
 for i, col in enumerate(mz_cols):
     lipid_data[col] = mz_deltas[:, i]
@@ -258,4 +264,13 @@ if args.plots:
     fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.png', dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.svg', bbox_inches = 'tight')
 
+    #m/z error vs m/z
+    fig, ax = plt.subplots()
+    ax.scatter(lipid_data['Average Mz'], lipid_data['mz_error'], s = 1, c = colors, marker = '.')
+    clb = fig.colorbar(sm, ax = ax, location = 'right')
+    clb.set_label('Score')
+    ax.set_ylabel('m/z Error')
+    ax.set_ylabel('Average m/z')
+    fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.png', dpi = 1000, bbox_inches = 'tight')
+    fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.svg', bbox_inches = 'tight')
 
