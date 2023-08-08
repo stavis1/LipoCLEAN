@@ -77,8 +77,8 @@ bad_idx.extend(lipid_data[[type(o) != str or o in ['Unknown','Others'] for o in 
 #this is an optional runtime argument if unused min_rt = 0 and this line does nothing
 bad_idx.extend(lipid_data[[r < args.min_rt for r in lipid_data['Average Rt(min)']]].index)
 #these columns need to have valid numbers in them for the model to work
-num_cols = ['Reference m/z','Average Mz','Dot product', 'S/N average']
-bad_idx.extend(lipid_data[np.any(np.logical_not(np.isfinite(lipid_data[num_cols].to_numpy())), axis = 1)].index)
+nonnancols = ['Dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
+bad_idx.extend(lipid_data[[any(np.isnan(v)) for v in zip(*[lipid_data[c] for c in nonnancols])]].index)
 bad_idx.extend(lipid_data[[type(s) != str for s in lipid_data['MS1 isotopic spectrum']]].index)
 bad_idx = list(set(bad_idx))
 print(f'{len(bad_idx)} entries not considered\n', flush = True)

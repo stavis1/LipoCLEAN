@@ -117,6 +117,8 @@ bad_idx.extend(lipid_data[[type(o) != str or o in ['Unknown','Others'] for o in 
 #features eluting in the dead volume are not considered reliably identifiable in our data and are discarded
 #this is an optional runtime argument if unused min_rt = 0 and this line does nothing
 bad_idx.extend(lipid_data[[r < args.min_rt for r in lipid_data['Average Rt(min)']]].index)
+nonnancols = ['Dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
+bad_idx.extend(lipid_data[[any(np.isnan(v)) for v in zip(*[lipid_data[c] for c in nonnancols])]].index)
 bad_rows = lipid_data.loc[bad_idx]
 bad_rows.to_csv(f'{args.out_dir}/training_QC/not_considered.tsv', sep = '\t', index = True)
 lipid_data.drop(bad_idx, inplace=True)
