@@ -121,8 +121,13 @@ bad_rows = lipid_data.loc[bad_idx]
 bad_rows.to_csv(f'{args.out_dir}/training_QC/not_considered.tsv', sep = '\t', index = True)
 lipid_data.drop(bad_idx, inplace=True)
 
+#identify columns containing m/z values
+mz_cols = list(lipid_data.columns)[list(lipid_data.columns).index('MS/MS spectrum')+1:]
+if any(lipid_data[c].dtype.kind != 'f' for c in mz_cols):
+    print('Potentially invalid data types in m/z columns. This could be due to non m/z columns being inserted after "MS/MS spectrum". Please check', flush = True)
+    print('m/z columns:\n' + '\n'.join(mz_cols))
+
 #calculate predictors
-lipid_data['mz_error'] = (lipid_data['Reference m/z'] - lipid_data['Average Mz'])/lipid_data['Average Mz']
 lipid_data['iso_mse'] = [iso_mse(o,iso_packet(f)) for o,f in zip(lipid_data['MS1 isotopic spectrum'],lipid_data['Formula'])]
 
 #pull out a subset of the data for testing at the end
@@ -132,17 +137,49 @@ lipid_data.drop(test_idx, inplace = True)
 lipid_data['test_set'] = [False]*lipid_data.shape[0]
 test_set['test_set'] = [True]*test_set.shape[0]
 
+#initial prediction model for filtering for m/z correction
+mz_features = ['iso_mse', 'Dot product', 'S/N average']
+mz_model = GBC(n_estimators = 40).fit(lipid_data[mz_features], lipid_data['label'])
+lipid_data['mz_prepred'] = mz_model.predict(lipid_data[mz_features])
+test_set['mz_prepred'] = mz_model.predict(test_set[mz_features])
+mz_set = lipid_data[lipid_data['mzModel_pred'] == 1]
+
+#store initial m/z errors for plotting
+init_deltas = lipid_data[mz_cols].to_numpy() - np.asarray([lipid_data['Reference m/z']]*len(mz_cols)).T
+init_deltas = init_deltas.flatten()
+
+#calculate the midmean of m/z errors within the mz_model prefiltered set on a per file basis
+mz_deltas = mz_set[mz_cols].to_numpy() - np.asarray([mz_set['Reference m/z']]*len(mz_cols)).T
+quartiles = np.nanquantile(mz_deltas, q = [0.75, 0.25], axis = 0)
+midmeans = np.nanmean(mz_deltas, axis = 0, where = np.logical_and(np.less_equal(mz_deltas, [quartiles[0,:]]*mz_set.shape[0]),
+                                                                  np.greater_equal(mz_deltas, [quartiles[1,:]]*mz_set.shape[0])))
+
+#apply the correction
+mz_deltas = lipid_data[mz_cols].to_numpy() - np.asarray([lipid_data['Reference m/z']]*len(mz_cols)).T
+mz_deltas = mz_deltas - np.asarray([midmeans]*lipid_data.shape[0])
+for i, col in enumerate(mz_cols):
+    lipid_data[col] = mz_deltas[:, i]
+lipid_data['mz_error'] = np.nanmean(lipid_data[mz_cols], axis = 1)
+
+mz_deltas = test_set[mz_cols].to_numpy() - np.asarray([test_set['Reference m/z']]*len(mz_cols)).T
+mz_deltas = mz_deltas - np.asarray([midmeans]*test_set.shape[0])
+for i, col in enumerate(mz_cols):
+    test_set[col] = mz_deltas[:, i]
+test_set['mz_error'] = np.nanmean(test_set[mz_cols], axis = 1)
+
+final_deltas = lipid_data[mz_cols].to_numpy().flatten()
+
 #initial prediction model for filtering for RT regression
 predictor_cols = ['Dot product', 'S/N average', 'iso_mse', 'mz_error']
 Y = lipid_data['label']
 X = lipid_data[predictor_cols]
-pre_model = GBC(n_estimators=40, max_features = 3).fit(X, Y)
+rt_model = GBC(n_estimators=40, max_features = 3).fit(X, Y)
 print('trained first model', flush = True)
 
 #predict class and filter down to initial positives for lowess RT correction model
-lipid_data['prepred'] = pre_model.predict(lipid_data[predictor_cols])
-test_set['prepred'] = pre_model.predict(test_set[predictor_cols])
-prepred = lipid_data[lipid_data['prepred'] == 1]
+lipid_data['rt_prepred'] = rt_model.predict(lipid_data[predictor_cols])
+test_set['rt_prepred'] = rt_model.predict(test_set[predictor_cols])
+rt_prepred = lipid_data[lipid_data['rt_prepred'] == 1]
 
 
 #retention time alignment is done on an experiment-by-experiment basis
@@ -155,8 +192,8 @@ for i in set(lipid_data['experiment']):
     temp_df = pd.concat([lipid_data[lipid_data['experiment'] == i],
                          test_set[test_set['experiment'] == i]])
     lowess = sm.nonparametric.lowess
-    rt_preds = lowess(prepred[prepred['experiment'] == i]['Reference RT'],
-                      prepred[prepred['experiment'] == i]['Average Rt(min)'],
+    rt_preds = lowess(rt_prepred[rt_prepred['experiment'] == i]['Reference RT'],
+                      rt_prepred[rt_prepred['experiment'] == i]['Average Rt(min)'],
                       frac = 0.1, it = 3,
                       xvals = temp_df['Average Rt(min)'])
     pred_rts.update({i:rt for i,rt in zip(temp_df.index, rt_preds)})
@@ -172,34 +209,48 @@ print('fit retention time corrections', flush = True)
 predictor_cols = ['Dot product', 'S/N average', 'iso_mse', 'mz_error', 'rt_error']
 Y = lipid_data['label']
 X = lipid_data[predictor_cols]
-model = GBC(n_estimators=40, max_features = 4).fit(X, Y)
+full_model = GBC(n_estimators=40, max_features = 4).fit(X, Y)
 print('trained final model', flush = True)
 
 #the model is trained so the test set can be safely reintegrated with the full data
 lipid_data = pd.concat([lipid_data, test_set])
 
 #predict class probabilities, these will be used to bin IDs
-lipid_data['score'] = model.predict_proba(lipid_data[predictor_cols])[:,1]
+lipid_data['score'] = full_model.predict_proba(lipid_data[predictor_cols])[:,1]
 
 #write GBC models to file for use with the inference script
 with open(f'{args.out_dir}/model.dill', 'wb') as pkl:
-    dill.dump((pre_model, model), pkl)
+    dill.dump((mz_model, rt_model, full_model), pkl)
 
 #### QC information to ensure that training went well
 print('writing QC information')
 
-#confusion matricies for the first round model
-pre_test_confuse = pd.DataFrame(confusion_matrix(lipid_data[lipid_data['test_set']]['label'],
-                                                 lipid_data[lipid_data['test_set']]['prepred']),
+#confusion matricies for the m/z prefilter model
+mz_test_confuse = pd.DataFrame(confusion_matrix(lipid_data[lipid_data['test_set']]['label'],
+                                                 lipid_data[lipid_data['test_set']]['mz_prepred']),
                                 index = ['Predicted Bad', 'Predicted Good'],
                                 columns = ['Bad', 'Good'])
-pre_test_confuse.to_csv(f'{args.out_dir}/training_QC/test_set_confusion_matrix_pre_model.tsv', sep = '\t')
+mz_test_confuse.to_csv(f'{args.out_dir}/training_QC/test_set_confusion_matrix_mz_model.tsv', sep = '\t')
 
-pre_train_confuse = pd.DataFrame(confusion_matrix(lipid_data[np.logical_not(lipid_data['test_set'])]['label'],
-                                                  lipid_data[np.logical_not(lipid_data['test_set'])]['prepred']),
+mz_train_confuse = pd.DataFrame(confusion_matrix(lipid_data[np.logical_not(lipid_data['test_set'])]['label'],
+                                                  lipid_data[np.logical_not(lipid_data['test_set'])]['mz_prepred']),
                                  index = ['Predicted Bad', 'Predicted Good'],
                                  columns = ['Bad', 'Good'])
-pre_train_confuse.to_csv(f'{args.out_dir}/training_QC/train_set_confusion_matrix_pre_model.tsv', sep = '\t')
+mz_train_confuse.to_csv(f'{args.out_dir}/training_QC/train_set_confusion_matrix_mz_model.tsv', sep = '\t')
+
+
+#confusion matricies for the RT prefilter model
+rt_test_confuse = pd.DataFrame(confusion_matrix(lipid_data[lipid_data['test_set']]['label'],
+                                                 lipid_data[lipid_data['test_set']]['rt_prepred']),
+                                index = ['Predicted Bad', 'Predicted Good'],
+                                columns = ['Bad', 'Good'])
+rt_test_confuse.to_csv(f'{args.out_dir}/training_QC/test_set_confusion_matrix_rt_model.tsv', sep = '\t')
+
+rt_train_confuse = pd.DataFrame(confusion_matrix(lipid_data[np.logical_not(lipid_data['test_set'])]['label'],
+                                                  lipid_data[np.logical_not(lipid_data['test_set'])]['rt_prepred']),
+                                 index = ['Predicted Bad', 'Predicted Good'],
+                                 columns = ['Bad', 'Good'])
+rt_train_confuse.to_csv(f'{args.out_dir}/training_QC/train_set_confusion_matrix_rt_model.tsv', sep = '\t')
 
 #confusion matricies for the final model
 lipid_data['pred_label'] = [1 if s > cut_high else 0 if s < cut_low else -1 for s in lipid_data['score']]
@@ -248,6 +299,8 @@ for exp in set(lipid_data['experiment']):
     ax.set_ylabel('Reference RT')
     ax.set_xlabel('Observed RT')
     ax.set_title(f'Experiment {exp}')
+    fig.savefig(f'{args.out_dir}/training_QC/RT_alignment-exp{exp}.png', 
+                dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/training_QC/RT_alignment-exp{exp}.svg', 
                 bbox_inches = 'tight')
     plt.close('all')
@@ -269,6 +322,8 @@ for pair in combinations(predictor_cols, 2):
     ax.set_xlabel(pair[0])
     clb = fig.colorbar(sm, ax = ax, location = 'right')
     clb.set_label('Score')
+    fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.png', 
+                dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.svg', 
                 bbox_inches = 'tight')
     plt.close('all')
@@ -308,6 +363,8 @@ for pair in combinations(predictor_cols, 2):
     ax.set_facecolor('lightgrey')
     ax.set_ylabel(pair[1])
     ax.set_xlabel(pair[0])
+    fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.png', 
+                dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.svg', 
                 bbox_inches = 'tight')
     plt.close('all')
@@ -332,6 +389,7 @@ for predictor in predictor_cols:
     ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
     ax.set_ylabel('Score')
     ax.set_xlabel(predictor)
+    fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.png', dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
 
 #ROC plots
@@ -364,6 +422,7 @@ for train,data in enumerate([lipid_data[lipid_data['test_set']],
     ax.set_xlabel('False Postiive Rate')
     ax.set_title(f'{"Train" if train else "Test"} Set ROC')
     ax.annotate(f'AUC: {"%.2f"%(aucroc)}', (0.5,0.5), ha='left', va='top')
+    fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.png', dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.svg', bbox_inches = 'tight')
 
 #score distributions of good and bad lipids
@@ -379,8 +438,17 @@ ax.set_ylim(ylim)
 ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
 ax.set_xlabel('Final Model Scores')
 ax.set_ylabel('Count')
+fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.png', dpi = 1000, bbox_inches = 'tight')
 fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.svg', bbox_inches = 'tight')
 
+#plot m/z correction
+fig, ax = plt.subplots()
+ax.hist(init_deltas, bins = 100, color = 'r', alpha = 0.5, label = 'Uncorrected')
+ax.hist(final_deltas, bins = 100, color = 'k', alpha = 0.5, label = 'Corrected')
+ax.legend()
+ax.set_xlabel('Delta m/z')
+fig.savefig(f'{args.out_dir}/training_QC/mz_correction.png', dpi = 1000, bbox_inches = 'tight')
+fig.savefig(f'{args.out_dir}/training_QC/mz_correction.svg', bbox_inches = 'tight')
 
 
 
