@@ -1,7 +1,7 @@
-# MSDpostprocess: A machine learning base quality filter for lipid identifications from MS-Dial
+# MSDpostprocess: A machine learning based quality filter for lipid identifications from MS-Dial
 
 ## Set up a local conda environment
-MSDPostprocess consists of a pair of python scripts, one for training and one for inference. The dependencies for these scripts are layed out in environments/MSDpostprocess.yml.
+MSDPostprocess consists of a pair of python scripts, one for training and one for inference. The dependencies for these scripts are laid out in environments/MSDpostprocess.yml.
 To set up the conda environment for these scripts:
 1. Install conda, miniconda, or mamba. Instructions can be found here https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
 2. Download the MSDpostprocess repository and navigate to the `environments` directory.
