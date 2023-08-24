@@ -14,7 +14,16 @@ To set up the conda environment for these scripts:
 3. Run `python ../scripts/MSDpostprocess-inference.py --input example_output_negative.txt,example_output_positive.txt --min_rt 7 --model model.dill --plots --out_dir ./`
 
 ## Export settings for inference
-MATTHEW WRITE THIS BIT
+1. Click "Export" along the top bar
+2. Select "Alignment result" in the dropdown menu
+3. Navigate to the directory (folder) to which you want to save the export using the "Browse" button
+4. The last alignment result selected should be listed as the export file. If this isn't the correct alignment, select the right one in the dropdown
+5. Select "m/z matrix" to be exported (deselect any other exports you do not want to generate)
+6. Make sure blank filtering is NOT selected
+7. "Export format" should be "msp"
+8. Click Export
+
+A .txt will now be generated in the chosen directory with the information required for the MSDpostprocess script. The file name will start with "Mz"
 
 ## Prepare training data
 1. Start with MS-Dial exports using the same settings as described above for running the inference script. 
