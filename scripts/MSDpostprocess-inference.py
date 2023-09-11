@@ -16,7 +16,9 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='msp output from MS-Dial. Multiple files from the same experiment can be input, e.g. positive and negative mode.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
-                    help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume. Default = 0.')
+                    help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume. Default = 0.0')
+parser.add_argument('-f', '--lowess_frac', action = 'store', required = False, default = 0.1, type = float,
+                    help='Fraction of data used per point in the Lowess regresson for RT correction. Default = 0.1')
 parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
                     help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2.')
 parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
@@ -60,6 +62,7 @@ def iso_mse(observed, expected):
     results = minimize(lambda x: np.mean((obs/x[0] - exp)**2), x0 = [sum(obs)], bounds = Bounds(lb = 1e-9))
     return np.mean((obs/results.x - exp)**2)
 
+prepred_cut = 0.8
 
 ###### initial data processing
 lipid_data = []
@@ -100,8 +103,8 @@ lipid_data['iso_mse'] = [iso_mse(o,iso_packet(f)) for o,f in zip(lipid_data['MS1
 
 #initial prediction of good lipids for fitting the m/z correction
 predictor_cols = ['iso_mse', 'Dot product', 'S/N average']
-lipid_data['rt_prepred'] = mz_model.predict(lipid_data[predictor_cols])
-mz_set = lipid_data[lipid_data['rt_prepred'] == 1]
+lipid_data['mz_prepred'] = mz_model.predict(lipid_data[predictor_cols])
+mz_set = lipid_data[lipid_data['mz_prepred'] == 1]
 
 #store initial m/z errors for plotting
 if args.plots:
@@ -131,8 +134,8 @@ if args.plots:
 
 #initial prediction of good lipids for fitting the RT alignment
 predictor_cols = ['Dot product', 'S/N average', 'iso_mse', 'mz_error']
-lipid_data['rt_prepred'] = rt_model.predict(lipid_data[predictor_cols])
-rt_set = lipid_data[lipid_data['rt_prepred'] == 1]
+lipid_data['rt_prepred'] = rt_model.predict_proba(lipid_data[predictor_cols])[:,1]
+rt_set = lipid_data[lipid_data['rt_prepred'] > prepred_cut]
 
 #lowess regression model predicts the referecene RT from the observed mean RT
 #using only the initially high confidence lipids
@@ -140,7 +143,7 @@ rt_set = lipid_data[lipid_data['rt_prepred'] == 1]
 lowess = sm.nonparametric.lowess
 lipid_data['pred_rt'] = lowess(rt_set['Reference RT'],
                                rt_set['Average Rt(min)'],
-                               frac = 0.1, it = 3,
+                               frac = args.lowess_frac, it = 3,
                                xvals = lipid_data['Average Rt(min)'])
 lipid_data['rt_error'] = lipid_data['Reference RT'] - lipid_data['pred_rt']
 
@@ -182,11 +185,11 @@ if args.plots:
     pts = sorted(list(zip(lipid_data['Average Rt(min)'], lipid_data['pred_rt'])), key = lambda x: x[0])
     
     fig, ax = plt.subplots()
-    ax.scatter(lipid_data[lipid_data['rt_prepred'] == 1]['Average Rt(min)'],
-               lipid_data[lipid_data['rt_prepred'] == 1]['Reference RT'],
+    ax.scatter(lipid_data[lipid_data['rt_prepred'] > prepred_cut]['Average Rt(min)'],
+               lipid_data[lipid_data['rt_prepred'] > prepred_cut]['Reference RT'],
                 s =1 , c= 'k', marker = '.', label = 'in regression set')
-    ax.scatter(lipid_data[lipid_data['rt_prepred'] == 0]['Average Rt(min)'],
-               lipid_data[lipid_data['rt_prepred'] == 0]['Reference RT'],
+    ax.scatter(lipid_data[lipid_data['rt_prepred'] <= prepred_cut]['Average Rt(min)'],
+               lipid_data[lipid_data['rt_prepred'] <= prepred_cut]['Reference RT'],
                 s =1 , c= 'r', marker = '.', label = 'not in regression set')
     ax.plot([p[0] for p in pts], [p[1] for p in pts],
             '-b', linewidth = 0.5, alpha = 0.5, label = 'regression')

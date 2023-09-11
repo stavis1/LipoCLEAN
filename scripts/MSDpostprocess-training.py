@@ -19,6 +19,8 @@ parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='Modified msp output from MS-Dial, see README for details.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
                     help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume.')
+parser.add_argument('-f', '--lowess_frac', action = 'store', required = False, default = 0.1, type = float,
+                    help='Fraction of data used per point in the Lowess regresson for RT correction. Default = 0.1')
 parser.add_argument('-n', '--ppm', action = 'store_true', required = False,
                     help='Use m/z error in units of ppm. Default is Daltons.')
 parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
@@ -48,6 +50,7 @@ from matplotlib import cm
 ###### function and object setup
 rng = np.random.default_rng(1234)
 
+prepred_cut = 0.8
 cut_high = args.cutoff_high #above this score lipid IDs are classed as good
 cut_low = args.cutoff_low #below this score lipid IDs are classed as bad
 #between the above two scores lipid IDs are set aside for manual reanalysis
@@ -188,9 +191,9 @@ rt_model = GBC(n_estimators=40, max_features = 3).fit(X, Y)
 print('trained first model', flush = True)
 
 #predict class and filter down to initial positives for lowess RT correction model
-lipid_data['rt_prepred'] = rt_model.predict(lipid_data[predictor_cols])
-test_set['rt_prepred'] = rt_model.predict(test_set[predictor_cols])
-rt_prepred = lipid_data[lipid_data['rt_prepred'] == 1]
+lipid_data['rt_prepred'] = rt_model.predict_proba(lipid_data[predictor_cols])[:,1]
+test_set['rt_prepred'] = rt_model.predict_proba(test_set[predictor_cols])[:,1]
+rt_prepred = lipid_data[lipid_data['rt_prepred'] > prepred_cut]
 
 
 #retention time alignment is done on an experiment-by-experiment basis
@@ -205,7 +208,7 @@ for i in set(lipid_data['experiment']):
     lowess = sm.nonparametric.lowess
     rt_preds = lowess(rt_prepred[rt_prepred['experiment'] == i]['Reference RT'],
                       rt_prepred[rt_prepred['experiment'] == i]['Average Rt(min)'],
-                      frac = 0.1, it = 3,
+                      frac = args.lowess_frac, it = 3,
                       xvals = temp_df['Average Rt(min)'])
     pred_rts.update({i:rt for i,rt in zip(temp_df.index, rt_preds)})
 
@@ -252,13 +255,13 @@ mz_train_confuse.to_csv(f'{args.out_dir}/training_QC/train_set_confusion_matrix_
 
 #confusion matricies for the RT prefilter model
 rt_test_confuse = pd.DataFrame(confusion_matrix(lipid_data[lipid_data['test_set']]['label'],
-                                                 lipid_data[lipid_data['test_set']]['rt_prepred']),
+                                                 [s > prepred_cut for s in lipid_data[lipid_data['test_set']]['rt_prepred']]),
                                 index = ['Predicted Bad', 'Predicted Good'],
                                 columns = ['Bad', 'Good'])
 rt_test_confuse.to_csv(f'{args.out_dir}/training_QC/test_set_confusion_matrix_rt_model.tsv', sep = '\t')
 
 rt_train_confuse = pd.DataFrame(confusion_matrix(lipid_data[np.logical_not(lipid_data['test_set'])]['label'],
-                                                  lipid_data[np.logical_not(lipid_data['test_set'])]['rt_prepred']),
+                                                  [s > prepred_cut for s in lipid_data[np.logical_not(lipid_data['test_set'])]['rt_prepred']]),
                                  index = ['Predicted Bad', 'Predicted Good'],
                                  columns = ['Bad', 'Good'])
 rt_train_confuse.to_csv(f'{args.out_dir}/training_QC/train_set_confusion_matrix_rt_model.tsv', sep = '\t')
@@ -293,11 +296,11 @@ for exp in set(lipid_data['experiment']):
     pts = sorted(list(zip(lipids['Average Rt(min)'], lipids['pred_rt'])), key = lambda x: x[0])
     
     fig, ax = plt.subplots()
-    df = lipids[[p == 1 for p in lipids['rt_prepred']]]
+    df = lipids[[p > prepred_cut for p in lipids['rt_prepred']]]
     ax.scatter(df['Average Rt(min)'],
                df['Reference RT'],
                s =1 , c= 'k', marker = '.', label = 'in regression set')
-    df = lipids[[p == 0 for p in lipids['rt_prepred']]]
+    df = lipids[[p <= prepred_cut for p in lipids['rt_prepred']]]
     ax.scatter(df['Average Rt(min)'],
                df['Reference RT'],
                s =1 , c= 'r', marker = '.', label = 'not in regression set')
@@ -310,9 +313,9 @@ for exp in set(lipid_data['experiment']):
     ax.set_ylabel('Reference RT')
     ax.set_xlabel('Observed RT')
     ax.set_title(f'Experiment {exp}')
-    fig.savefig(f'{args.out_dir}/training_QC/RT_alignment-exp{exp}.png', 
+    fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.png', 
                 dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/RT_alignment-exp{exp}.svg', 
+    fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.svg', 
                 bbox_inches = 'tight')
     plt.close('all')
 
