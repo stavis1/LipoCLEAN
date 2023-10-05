@@ -17,7 +17,7 @@ parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='msp output from MS-Dial. Multiple files from the same experiment can be input, e.g. positive and negative mode.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
                     help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume. Default = 0.0')
-parser.add_argument('-f', '--lowess_frac', action = 'store', required = False, default = 0.1, type = float,
+parser.add_argument('-f', '--lowess_frac', action = 'store', required = False, default = 0.15, type = float,
                     help='Fraction of data used per point in the Lowess regresson for RT correction. Default = 0.1')
 parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
                     help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2.')
@@ -25,9 +25,9 @@ parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, d
                     help='Putative IDs with a final model score above this value are labeled good IDs. Default = 0.8.')
 parser.add_argument('-m', '--model', action = 'store', required = False, default = '/model.dill',
                     help='Pickled random forest model file created by training script. In the docker version if the file is not provided the default model will be used.')
-parser.add_argument('-p', '--plots', action = 'store_true', required = False,
-                    help='Generate plots to troubleshoot poor predictions. Default is no plots.')
-parser.add_argument('-n', '--ppm', action = 'store_true', required = False,
+parser.add_argument('-n', '--no_plots', action = 'store_true', required = False,
+                    help='Generate plots to troubleshoot poor predictions. Default is to generate plots.')
+parser.add_argument('-p', '--ppm', action = 'store_true', required = False,
                     help='Use m/z error in units of ppm. Default is Daltons.')
 parser.add_argument('-o', '--out_dir', action = 'store', required = True,
                     help='Directory for all outputs to be written to.')
@@ -107,7 +107,7 @@ lipid_data['mz_prepred'] = mz_model.predict(lipid_data[predictor_cols])
 mz_set = lipid_data[lipid_data['mz_prepred'] == 1]
 
 #store initial m/z errors for plotting
-if args.plots:
+if not args.no_plots:
     init_deltas = lipid_data[mz_cols].to_numpy() - np.asarray([lipid_data['Reference m/z']]*len(mz_cols)).T
     init_deltas = init_deltas.flatten()
 
@@ -129,7 +129,7 @@ for i, col in enumerate(mz_cols):
 lipid_data['mz_error'] = np.nanmean(lipid_data[mz_cols], axis = 1)
 
 #final m/z errors for plotting
-if args.plots:
+if not args.no_plots:
     final_deltas = lipid_data[mz_cols].to_numpy().flatten()
 
 #initial prediction of good lipids for fitting the RT alignment
@@ -164,7 +164,7 @@ params = pd.DataFrame({'Parameter':vars(args).keys(),
                        'Value':vars(args).values()})
 params.to_csv(f'{args.out_dir}/inference_parameters.tsv', sep = '\t', index = False)
 
-if args.plots:
+if not args.no_plots:
     import os
     import matplotlib
     matplotlib.use('Agg')

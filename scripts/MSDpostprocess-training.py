@@ -19,9 +19,9 @@ parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='Modified msp output from MS-Dial, see README for details.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
                     help='Minimum observed retention time in minutes, used to filter peaks eluting in the dead volume.')
-parser.add_argument('-f', '--lowess_frac', action = 'store', required = False, default = 0.1, type = float,
+parser.add_argument('-f', '--lowess_frac', action = 'store', required = False, default = 0.15, type = float,
                     help='Fraction of data used per point in the Lowess regresson for RT correction. Default = 0.1')
-parser.add_argument('-n', '--ppm', action = 'store_true', required = False,
+parser.add_argument('-p', '--ppm', action = 'store_true', required = False,
                     help='Use m/z error in units of ppm. Default is Daltons.')
 parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
                     help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2')
