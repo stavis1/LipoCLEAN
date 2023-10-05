@@ -13,7 +13,11 @@ To set up the conda environment for these scripts:
 2. Run `python ../scripts/MSDpostprocess-training.py --input training_data.tsv --min_rt 7 --out_dir ./`
 3. Run `python ../scripts/MSDpostprocess-inference.py --input example_output_negative.txt,example_output_positive.txt --min_rt 7 --model model.dill --plots --out_dir ./`
 
-## Export settings for inference
+Running either script with the `--help` flag will show a list of available options.
+
+On some Windows environments the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the script.
+
+## MS-Dial export settings for inference
 1. Click "Export" along the top bar
 2. Select "Alignment result" in the dropdown menu
 3. Navigate to the directory (folder) to which you want to save the export using the "Browse" button
