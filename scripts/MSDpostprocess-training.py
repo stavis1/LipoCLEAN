@@ -290,6 +290,10 @@ lipid_data[lipid_data['pred_label'] == -1].to_csv(f'{args.out_dir}/training_QC/r
 lipid_data[lipid_data['pred_label'] == 0].to_csv(f'{args.out_dir}/training_QC/bad_lipids.tsv', 
                                                               sep = '\t', index = False)
 
+params = pd.DataFrame({'Parameter':vars(args).keys(),
+                       'Value':vars(args).values()})
+params.to_csv(f'{args.out_dir}/training_parameters.tsv', sep = '\t', index = False)
+
 #plot retention time regression
 for exp in set(lipid_data['experiment']):
     lipids = lipid_data[[e == exp for e in lipid_data['experiment']]]

@@ -160,6 +160,10 @@ lipid_data[lipid_data['pred_label'] == -1].to_csv(f'{args.out_dir}/reanalyze_lip
 lipid_data[lipid_data['pred_label'] == 0].to_csv(f'{args.out_dir}/bad_lipids.tsv', 
                                                               sep = '\t', index = False)
 
+params = pd.DataFrame({'Parameter':vars(args).keys(),
+                       'Value':vars(args).values()})
+params.to_csv(f'{args.out_dir}/inference_parameters.tsv', sep = '\t', index = False)
+
 if args.plots:
     import os
     import matplotlib
