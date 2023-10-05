@@ -181,6 +181,9 @@ if args.plots:
         sm.set_clim(vmin = min(vals), vmax = max(vals))
         return sm
     
+    fsize = 12
+    ptsize = 15
+    
     #plot retention time regression
     pts = sorted(list(zip(lipid_data['Average Rt(min)'], lipid_data['pred_rt'])), key = lambda x: x[0])
     
@@ -192,7 +195,7 @@ if args.plots:
                lipid_data[lipid_data['rt_prepred'] <= prepred_cut]['Reference RT'],
                 s =1 , c= 'r', marker = '.', label = 'not in regression set')
     ax.plot([p[0] for p in pts], [p[1] for p in pts],
-            '-b', linewidth = 0.5, alpha = 0.5, label = 'regression')
+            '-b', linewidth = 1.5, alpha = 0.5, label = 'regression')
     ax.legend()
     y0,y1 = ax.get_ylim()
     x0,x1 = ax.get_xlim()
@@ -211,16 +214,16 @@ if args.plots:
     for pair in combinations(predictor_cols, 2):
         fig, ax = plt.subplots(figsize = (6,6))
         ax.scatter(lipid_data[pair[0]], lipid_data[pair[1]],
-                   s = 1, color = colors, marker = '.')
+                   s = ptsize, color = colors, marker = '.')
         if log_pred[pair[0]]:
             ax.set_xscale('log')
         elif log_pred[pair[1]]:
             ax.set_yscale('log')
         ax.set_facecolor('lightgrey')
-        ax.set_ylabel(pair[1])
-        ax.set_xlabel(pair[0])
+        ax.set_ylabel(pair[1], fontsize = fsize)
+        ax.set_xlabel(pair[0], fontsize = fsize)
         clb = fig.colorbar(sm, ax = ax, location = 'right')
-        clb.set_label('Score')
+        clb.set_label('Score', fontsize = fsize)
         fig.savefig(f'{args.out_dir}/inference_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}.png', 
                     dpi = 1000, bbox_inches = 'tight')
         fig.savefig(f'{args.out_dir}/inference_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}.svg', 
@@ -233,15 +236,15 @@ if args.plots:
         fig, ax = plt.subplots(figsize = (6,6))
         ax.scatter(lipid_data[predictor],
                    lipid_data['score'],
-                   s = 1, c = 'k', marker = '.')
+                   s = ptsize, c = 'k', marker = '.')
         xlim = [x if x > 0 else min(lipid_data[predictor]) for x in ax.get_xlim()]  if log_pred[predictor] else ax.get_xlim()
         ax.plot(xlim, [cut_low]*2, '-b', linewidth = .5)
         ax.plot(xlim, [cut_high]*2, '-b', linewidth = .5)
         if log_pred[predictor]:
             ax.set_xscale('log')
         ax.set_xlim(xlim)
-        ax.set_ylabel('Score')
-        ax.set_xlabel(predictor)
+        ax.set_ylabel('Score', fontsize = fsize)
+        ax.set_xlabel(predictor, fontsize = fsize)
         fig.savefig(f'{args.out_dir}/inference_QC/{predictor.replace("/","")}.png', dpi = 1000, bbox_inches = 'tight')
         fig.savefig(f'{args.out_dir}/inference_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
 
@@ -253,8 +256,8 @@ if args.plots:
     ax.plot([cut_low]*2, ylim, '-b', linewidth = 0.5)
     ax.plot([cut_high]*2, ylim, '-b', linewidth = 0.5)
     ax.set_ylim(ylim)
-    ax.set_xlabel('Final Model Scores')
-    ax.set_ylabel('Count')
+    ax.set_xlabel('Final Model Scores', fontsize = fsize)
+    ax.set_ylabel('Count', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/inference_QC/ScoresDistribution.png', dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/inference_QC/ScoresDistribution.svg', bbox_inches = 'tight')
 
@@ -263,17 +266,17 @@ if args.plots:
     ax.hist(init_deltas, bins = 100, color = 'r', alpha = 0.5, label = 'Uncorrected')
     ax.hist(final_deltas, bins = 100, color = 'k', alpha = 0.5, label = 'Corrected')
     ax.legend()
-    ax.set_xlabel('Delta m/z')
+    ax.set_xlabel('Delta m/z', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.png', dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.svg', bbox_inches = 'tight')
 
     #m/z error vs m/z
     fig, ax = plt.subplots()
-    ax.scatter(lipid_data['Average Mz'], lipid_data['mz_error'], s = 1, c = colors, marker = '.')
+    ax.scatter(lipid_data['Average Mz'], lipid_data['mz_error'], s = ptsize, c = colors, marker = '.')
     clb = fig.colorbar(sm, ax = ax, location = 'right')
-    clb.set_label('Score')
-    ax.set_ylabel('m/z Error')
-    ax.set_ylabel('Average m/z')
+    clb.set_label('Score', fontsize = fsize)
+    ax.set_ylabel('m/z Error', fontsize = fsize)
+    ax.set_ylabel('Average m/z', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/inference_QC/mz_errorVmz.png', dpi = 1000, bbox_inches = 'tight')
     fig.savefig(f'{args.out_dir}/inference_QC/mz_errorVmz.svg', bbox_inches = 'tight')
 
