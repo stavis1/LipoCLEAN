@@ -23,6 +23,8 @@ parser.add_argument('-f', '--lowess_frac', action = 'store', required = False, d
                     help='Fraction of data used per point in the Lowess regresson for RT correction. Default = 0.1')
 parser.add_argument('-p', '--ppm', action = 'store_true', required = False,
                     help='Use m/z error in units of ppm. Default is Daltons.')
+parser.add_argument('-n', '--no_plots', action = 'store_true', required = False,
+                    help='Generate plots to troubleshoot poor predictions. Default is to generate plots.')
 parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
                     help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2')
 parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
@@ -42,10 +44,6 @@ from sklearn.ensemble import GradientBoostingClassifier as GBC
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_auc_score
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib import cm
 
 ###### function and object setup
 rng = np.random.default_rng(1234)
@@ -68,20 +66,6 @@ def iso_mse(observed, expected):
     exp = np.asarray(expected)
     results = minimize(lambda x: np.mean((obs/x[0] - exp)**2), x0 = [sum(obs)], bounds = Bounds(lb = 1e-9))
     return np.mean((obs/results.x - exp)**2)
-
-
-#returns a list of colors based on some scalar value
-def get_colors(vals):
-    low = min(vals)
-    high = max(vals)
-    return [cm.plasma(int(((val-low)/(high-low))*cm.plasma.N)) for val in vals]
-
-#this is used for creating a colorbar when plotting
-def get_sm(vals):
-    colormap = matplotlib.colormaps['plasma']
-    sm = plt.cm.ScalarMappable(cmap=colormap)
-    sm.set_clim(vmin = min(vals), vmax = max(vals))
-    return sm
 
 #True positive rate for ROC plots
 def TPR(tn,fp,fn,tp):
@@ -294,207 +278,227 @@ params = pd.DataFrame({'Parameter':vars(args).keys(),
                        'Value':vars(args).values()})
 params.to_csv(f'{args.out_dir}/training_parameters.tsv', sep = '\t', index = False)
 
-#plot retention time regression
-for exp in set(lipid_data['experiment']):
-    lipids = lipid_data[[e == exp for e in lipid_data['experiment']]]
-    pts = sorted(list(zip(lipids['Average Rt(min)'], lipids['pred_rt'])), key = lambda x: x[0])
+if not args.no_plots:
     
-    fig, ax = plt.subplots()
-    df = lipids[[p > prepred_cut for p in lipids['rt_prepred']]]
-    ax.scatter(df['Average Rt(min)'],
-               df['Reference RT'],
-               s =1 , c= 'k', marker = '.', label = 'in regression set')
-    df = lipids[[p <= prepred_cut for p in lipids['rt_prepred']]]
-    ax.scatter(df['Average Rt(min)'],
-               df['Reference RT'],
-               s =1 , c= 'r', marker = '.', label = 'not in regression set')
-    ax.plot([p[0] for p in pts], [p[1] for p in pts],
-            '-b', linewidth = 1.5, alpha = 0.5, label = 'regression')
-    ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
-    y0,y1 = ax.get_ylim()
-    x0,x1 = ax.get_xlim()
-    ax.set_aspect(abs(x1-x0)/abs(y1-y0))
-    ax.set_ylabel('Reference RT')
-    ax.set_xlabel('Observed RT')
-    ax.set_title(f'Experiment {exp}')
-    fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.png', 
-                dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.svg', 
-                bbox_inches = 'tight')
-    plt.close('all')
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from matplotlib import cm
 
-log_pred = {'Dot product':False, 'S/N average':True, 'iso_mse':True, 'mz_error':False, 'rt_error':False} #whether to plot each predictor on a log scale
-#scatterplots of all possible pairs of predictors colored by the final model score
-fsize = 12
-ptsize = 15
-colors = get_colors(lipid_data['score'])
-sm = get_sm(lipid_data['score'])
-for pair in combinations(predictor_cols, 2):
-    fig, ax = plt.subplots(figsize = (6,6))
-    ax.scatter(lipid_data[pair[0]], lipid_data[pair[1]],
-               s = ptsize, color = colors, marker = '.')
-    if log_pred[pair[0]]:
-        ax.set_xscale('log')
-    elif log_pred[pair[1]]:
-        ax.set_yscale('log')
-    ax.set_facecolor('lightgrey')
-    ax.set_ylabel(pair[1], fontsize = fsize)
-    ax.set_xlabel(pair[0], fontsize = fsize)
+    #returns a list of colors based on some scalar value
+    def get_colors(vals):
+        low = min(vals)
+        high = max(vals)
+        return [cm.plasma(int(((val-low)/(high-low))*cm.plasma.N)) for val in vals]
+    
+    #this is used for creating a colorbar when plotting
+    def get_sm(vals):
+        colormap = matplotlib.colormaps['plasma']
+        sm = plt.cm.ScalarMappable(cmap=colormap)
+        sm.set_clim(vmin = min(vals), vmax = max(vals))
+        return sm
+
+    #plot retention time regression
+    for exp in set(lipid_data['experiment']):
+        lipids = lipid_data[[e == exp for e in lipid_data['experiment']]]
+        pts = sorted(list(zip(lipids['Average Rt(min)'], lipids['pred_rt'])), key = lambda x: x[0])
+        
+        fig, ax = plt.subplots()
+        df = lipids[[p > prepred_cut for p in lipids['rt_prepred']]]
+        ax.scatter(df['Average Rt(min)'],
+                   df['Reference RT'],
+                   s =1 , c= 'k', marker = '.', label = 'in regression set')
+        df = lipids[[p <= prepred_cut for p in lipids['rt_prepred']]]
+        ax.scatter(df['Average Rt(min)'],
+                   df['Reference RT'],
+                   s =1 , c= 'r', marker = '.', label = 'not in regression set')
+        ax.plot([p[0] for p in pts], [p[1] for p in pts],
+                '-b', linewidth = 1.5, alpha = 0.5, label = 'regression')
+        ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
+        y0,y1 = ax.get_ylim()
+        x0,x1 = ax.get_xlim()
+        ax.set_aspect(abs(x1-x0)/abs(y1-y0))
+        ax.set_ylabel('Reference RT')
+        ax.set_xlabel('Observed RT')
+        ax.set_title(f'Experiment {exp}')
+        fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.png', 
+                    dpi = 1000, bbox_inches = 'tight')
+        fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.svg', 
+                    bbox_inches = 'tight')
+        plt.close('all')
+    
+    log_pred = {'Dot product':False, 'S/N average':True, 'iso_mse':True, 'mz_error':False, 'rt_error':False} #whether to plot each predictor on a log scale
+    #scatterplots of all possible pairs of predictors colored by the final model score
+    fsize = 12
+    ptsize = 15
+    colors = get_colors(lipid_data['score'])
+    sm = get_sm(lipid_data['score'])
+    for pair in combinations(predictor_cols, 2):
+        fig, ax = plt.subplots(figsize = (6,6))
+        ax.scatter(lipid_data[pair[0]], lipid_data[pair[1]],
+                   s = ptsize, color = colors, marker = '.')
+        if log_pred[pair[0]]:
+            ax.set_xscale('log')
+        elif log_pred[pair[1]]:
+            ax.set_yscale('log')
+        ax.set_facecolor('lightgrey')
+        ax.set_ylabel(pair[1], fontsize = fsize)
+        ax.set_xlabel(pair[0], fontsize = fsize)
+        clb = fig.colorbar(sm, ax = ax, location = 'right')
+        clb.set_label('Score', fontsize = fsize)
+        fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.png', 
+                    dpi = 1000, bbox_inches = 'tight')
+        fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.svg', 
+                    bbox_inches = 'tight')
+        plt.close('all')
+    
+    #the same scatterplots as above but colored by each point's position in the confusion matrix
+    def confusion(label, prediction):
+        if label:
+            if prediction == 1:
+                return 'True Positive'
+            elif prediction == -1:
+                return 'Reanalyze Positive'
+            else:
+                return 'False Negative'
+        else:
+            if prediction == 1:
+                return 'False Positive'
+            elif prediction == -1:
+                return 'Reanalyze Negative'
+            else:
+                return 'True Negative'
+    
+    lipid_data['confusion'] = [confusion(l, p) for l, p in zip(lipid_data['label'], lipid_data['pred_label'])]
+    
+    cat_colors = {'True Positive':'#4477AA', 'Reanalyze Positive':'#66CCEE', 'False Negative':'#228833',
+                  'False Positive':'#AA3377', 'Reanalyze Negative':'#EE6677', 'True Negative':'#CCBB44'}
+    for pair in combinations(predictor_cols, 2):
+        fig, ax = plt.subplots(figsize = (6,6))
+        for cat in cat_colors.keys():
+            lipids = lipid_data[lipid_data['confusion'] == cat]
+            ax.scatter(lipids[pair[0]], lipids[pair[1]],
+                       s = ptsize, color = cat_colors[cat], marker = '.', label = cat)
+        ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
+        if log_pred[pair[0]]:
+            ax.set_xscale('log')
+        elif log_pred[pair[1]]:
+            ax.set_yscale('log')
+        # ax.set_facecolor('lightgrey')
+        ax.set_ylabel(pair[1], fontsize = fsize)
+        ax.set_xlabel(pair[0], fontsize = fsize)
+        fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.png', 
+                    dpi = 1000, bbox_inches = 'tight')
+        fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.svg', 
+                    bbox_inches = 'tight')
+        plt.close('all')
+        
+    #individual predictors correlation with final scores
+    for predictor in predictor_cols:
+        fig, ax = plt.subplots(figsize = (6,6))
+        ax.scatter(lipid_data[lipid_data['label'] == 1][predictor],
+                   lipid_data[lipid_data['label'] == 1]['score'],
+                   s = ptsize, c = 'k', marker = '.', label = 'True')
+        ax.scatter(lipid_data[lipid_data['label'] == 0][predictor],
+                   lipid_data[lipid_data['label'] == 0]['score'],
+                   s = ptsize, c = 'r', marker = '.', label = 'False')
+        xlim = [x if x > 0 else min(lipid_data[predictor]) for x in ax.get_xlim()]  if log_pred[predictor] else ax.get_xlim()
+        ax.plot(xlim,
+                [cut_low]*2, '-b', linewidth = .5)
+        ax.plot(xlim,
+                [cut_high]*2, '-b', linewidth = .5, label = 'Cutoffs')
+        if log_pred[predictor]:
+            ax.set_xscale('log')
+        ax.set_xlim(xlim)
+        ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
+        ax.set_ylabel('Score', fontsize = fsize)
+        ax.set_xlabel(predictor, fontsize = fsize)
+        fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.png', dpi = 1000, bbox_inches = 'tight')
+        fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
+    
+    #ROC plots
+    for train,data in enumerate([lipid_data[lipid_data['test_set']],
+                                 lipid_data[np.logical_not(lipid_data['test_set'])]]):
+        aucroc = roc_auc_score(data['label'], data['score'])
+        
+        #calculate the ROC curve
+        tprs = [0]
+        fprs = [0]
+        for cut in sorted(list(set(data['score'])), reverse=True):
+            calls = [yhat >= cut for yhat in data['score']]
+            tn,fp,fn,tp = confusion_matrix(data['label'], calls).flatten()
+            tprs.append(TPR(tn,fp,fn,tp))
+            fprs.append(FPR(tn,fp,fn,tp))
+        tprs.append(1)
+        fprs.append(1)
+        
+        calls = [yhat >= args.cutoff_high for yhat in data['score']]
+        tn,fp,fn,tp = confusion_matrix(data['label'], calls).flatten()
+        high_tpr = TPR(tn,fp,fn,tp)
+        high_fpr = FPR(tn,fp,fn,tp)
+        calls = [yhat >= args.cutoff_low for yhat in data['score']]
+        tn,fp,fn,tp = confusion_matrix(data['label'], calls).flatten()
+        low_tpr = TPR(tn,fp,fn,tp)
+        low_fpr = FPR(tn,fp,fn,tp)
+        
+        fig, ax = plt.subplots(figsize = (6,6))
+        ax.plot(fprs,tprs,'-k', linewidth = 1)
+        ax.plot([0,1],[0,1], '--r', linewidth = 0.5)
+        
+        ax.scatter([high_fpr, low_fpr],
+                   [high_tpr, low_tpr],
+                   s = ptsize, color = 'r', marker = '.')
+        _=[ax.text(fpr, tpr, txt, ha = 'left', va = 'top') for fpr,tpr,txt in zip([high_fpr, low_fpr],
+                                                                                  [high_tpr, low_tpr],
+                                                                                  ['Good Cutoff', 'Reanalyze Cutoff'])]
+        
+        y0,y1 = ax.get_ylim()
+        x0,x1 = ax.get_xlim()
+        ax.set_aspect(abs(x1-x0)/abs(y1-y0))
+        ax.set_ylim(-.001,1.001)
+        ax.set_xlim(-.001,1.001)
+        ax.set_facecolor('lightgrey')
+        ax.set_ylabel('True Postiive Rate', fontsize = fsize)
+        ax.set_xlabel('False Postiive Rate', fontsize = fsize)
+        ax.set_title(f'{"Train" if train else "Test"} Set ROC')
+        ax.annotate(f'AUC: {"%.2f"%(aucroc)}', (0.5,0.5), ha='left', va='top')
+        fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.png', dpi = 1000, bbox_inches = 'tight')
+        fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.svg', bbox_inches = 'tight')
+    
+    #score distributions of good and bad lipids
+    bins = np.linspace(min(lipid_data['score']),max(lipid_data['score']),80)
+    fig, ax = plt.subplots()
+    ax.hist(lipid_data[lipid_data['label'] == 1]['score'], bins = bins, color = 'k', alpha = 0.5, label = 'Good Lipids')
+    ax.hist(lipid_data[lipid_data['label'] == 0]['score'], bins = bins, color = 'r', alpha = 0.5, label = 'Bad Lipids')
+    ax.set_xlim(0,1)
+    ylim = ax.get_ylim()
+    ax.plot([cut_low]*2, ylim, '-b', linewidth = 0.5)
+    ax.plot([cut_high]*2, ylim, '-b', linewidth = 0.5, label = 'Cutoffs')
+    ax.set_ylim(ylim)
+    ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
+    ax.set_xlabel('Final Model Scores', fontsize = fsize)
+    ax.set_ylabel('Count', fontsize = fsize)
+    fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.png', dpi = 1000, bbox_inches = 'tight')
+    fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.svg', bbox_inches = 'tight')
+    
+    #plot m/z correction
+    fig, ax = plt.subplots()
+    ax.hist(init_deltas, bins = 100, color = 'r', alpha = 0.5, label = 'Uncorrected')
+    ax.hist(final_deltas, bins = 100, color = 'k', alpha = 0.5, label = 'Corrected')
+    ax.legend()
+    ax.set_xlabel('Delta m/z', fontsize = fsize)
+    fig.savefig(f'{args.out_dir}/training_QC/mz_correction.png', dpi = 1000, bbox_inches = 'tight')
+    fig.savefig(f'{args.out_dir}/training_QC/mz_correction.svg', bbox_inches = 'tight')
+    
+    #m/z error vs m/z
+    fig, ax = plt.subplots()
+    ax.scatter(lipid_data['Average Mz'], lipid_data['mz_error'], s = ptsize, c = colors, marker = '.')
     clb = fig.colorbar(sm, ax = ax, location = 'right')
     clb.set_label('Score', fontsize = fsize)
-    fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.png', 
-                dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.svg', 
-                bbox_inches = 'tight')
-    plt.close('all')
-
-#the same scatterplots as above but colored by each point's position in the confusion matrix
-def confusion(label, prediction):
-    if label:
-        if prediction == 1:
-            return 'True Positive'
-        elif prediction == -1:
-            return 'Reanalyze Positive'
-        else:
-            return 'False Negative'
-    else:
-        if prediction == 1:
-            return 'False Positive'
-        elif prediction == -1:
-            return 'Reanalyze Negative'
-        else:
-            return 'True Negative'
-
-lipid_data['confusion'] = [confusion(l, p) for l, p in zip(lipid_data['label'], lipid_data['pred_label'])]
-
-cat_colors = {'True Positive':'#4477AA', 'Reanalyze Positive':'#66CCEE', 'False Negative':'#228833',
-              'False Positive':'#AA3377', 'Reanalyze Negative':'#EE6677', 'True Negative':'#CCBB44'}
-for pair in combinations(predictor_cols, 2):
-    fig, ax = plt.subplots(figsize = (6,6))
-    for cat in cat_colors.keys():
-        lipids = lipid_data[lipid_data['confusion'] == cat]
-        ax.scatter(lipids[pair[0]], lipids[pair[1]],
-                   s = ptsize, color = cat_colors[cat], marker = '.', label = cat)
-    ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
-    if log_pred[pair[0]]:
-        ax.set_xscale('log')
-    elif log_pred[pair[1]]:
-        ax.set_yscale('log')
-    # ax.set_facecolor('lightgrey')
-    ax.set_ylabel(pair[1], fontsize = fsize)
-    ax.set_xlabel(pair[0], fontsize = fsize)
-    fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.png', 
-                dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.svg', 
-                bbox_inches = 'tight')
-    plt.close('all')
-    
-#individual predictors correlation with final scores
-for predictor in predictor_cols:
-    fig, ax = plt.subplots(figsize = (6,6))
-    ax.scatter(lipid_data[lipid_data['label'] == 1][predictor],
-               lipid_data[lipid_data['label'] == 1]['score'],
-               s = ptsize, c = 'k', marker = '.', label = 'True')
-    ax.scatter(lipid_data[lipid_data['label'] == 0][predictor],
-               lipid_data[lipid_data['label'] == 0]['score'],
-               s = ptsize, c = 'r', marker = '.', label = 'False')
-    xlim = [x if x > 0 else min(lipid_data[predictor]) for x in ax.get_xlim()]  if log_pred[predictor] else ax.get_xlim()
-    ax.plot(xlim,
-            [cut_low]*2, '-b', linewidth = .5)
-    ax.plot(xlim,
-            [cut_high]*2, '-b', linewidth = .5, label = 'Cutoffs')
-    if log_pred[predictor]:
-        ax.set_xscale('log')
-    ax.set_xlim(xlim)
-    ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
-    ax.set_ylabel('Score', fontsize = fsize)
-    ax.set_xlabel(predictor, fontsize = fsize)
-    fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
-
-#ROC plots
-for train,data in enumerate([lipid_data[lipid_data['test_set']],
-                             lipid_data[np.logical_not(lipid_data['test_set'])]]):
-    aucroc = roc_auc_score(data['label'], data['score'])
-    
-    #calculate the ROC curve
-    tprs = [0]
-    fprs = [0]
-    for cut in sorted(list(set(data['score'])), reverse=True):
-        calls = [yhat >= cut for yhat in data['score']]
-        tn,fp,fn,tp = confusion_matrix(data['label'], calls).flatten()
-        tprs.append(TPR(tn,fp,fn,tp))
-        fprs.append(FPR(tn,fp,fn,tp))
-    tprs.append(1)
-    fprs.append(1)
-    
-    calls = [yhat >= args.cutoff_high for yhat in data['score']]
-    tn,fp,fn,tp = confusion_matrix(data['label'], calls).flatten()
-    high_tpr = TPR(tn,fp,fn,tp)
-    high_fpr = FPR(tn,fp,fn,tp)
-    calls = [yhat >= args.cutoff_low for yhat in data['score']]
-    tn,fp,fn,tp = confusion_matrix(data['label'], calls).flatten()
-    low_tpr = TPR(tn,fp,fn,tp)
-    low_fpr = FPR(tn,fp,fn,tp)
-    
-    fig, ax = plt.subplots(figsize = (6,6))
-    ax.plot(fprs,tprs,'-k', linewidth = 1)
-    ax.plot([0,1],[0,1], '--r', linewidth = 0.5)
-    
-    ax.scatter([high_fpr, low_fpr],
-               [high_tpr, low_tpr],
-               s = ptsize, color = 'r', marker = '.')
-    _=[ax.text(fpr, tpr, txt, ha = 'left', va = 'top') for fpr,tpr,txt in zip([high_fpr, low_fpr],
-                                                                              [high_tpr, low_tpr],
-                                                                              ['Good Cutoff', 'Reanalyze Cutoff'])]
-    
-    y0,y1 = ax.get_ylim()
-    x0,x1 = ax.get_xlim()
-    ax.set_aspect(abs(x1-x0)/abs(y1-y0))
-    ax.set_ylim(-.001,1.001)
-    ax.set_xlim(-.001,1.001)
-    ax.set_facecolor('lightgrey')
-    ax.set_ylabel('True Postiive Rate', fontsize = fsize)
-    ax.set_xlabel('False Postiive Rate', fontsize = fsize)
-    ax.set_title(f'{"Train" if train else "Test"} Set ROC')
-    ax.annotate(f'AUC: {"%.2f"%(aucroc)}', (0.5,0.5), ha='left', va='top')
-    fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.svg', bbox_inches = 'tight')
-
-#score distributions of good and bad lipids
-bins = np.linspace(min(lipid_data['score']),max(lipid_data['score']),80)
-fig, ax = plt.subplots()
-ax.hist(lipid_data[lipid_data['label'] == 1]['score'], bins = bins, color = 'k', alpha = 0.5, label = 'Good Lipids')
-ax.hist(lipid_data[lipid_data['label'] == 0]['score'], bins = bins, color = 'r', alpha = 0.5, label = 'Bad Lipids')
-ax.set_xlim(0,1)
-ylim = ax.get_ylim()
-ax.plot([cut_low]*2, ylim, '-b', linewidth = 0.5)
-ax.plot([cut_high]*2, ylim, '-b', linewidth = 0.5, label = 'Cutoffs')
-ax.set_ylim(ylim)
-ax.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0)
-ax.set_xlabel('Final Model Scores', fontsize = fsize)
-ax.set_ylabel('Count', fontsize = fsize)
-fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.png', dpi = 1000, bbox_inches = 'tight')
-fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.svg', bbox_inches = 'tight')
-
-#plot m/z correction
-fig, ax = plt.subplots()
-ax.hist(init_deltas, bins = 100, color = 'r', alpha = 0.5, label = 'Uncorrected')
-ax.hist(final_deltas, bins = 100, color = 'k', alpha = 0.5, label = 'Corrected')
-ax.legend()
-ax.set_xlabel('Delta m/z', fontsize = fsize)
-fig.savefig(f'{args.out_dir}/training_QC/mz_correction.png', dpi = 1000, bbox_inches = 'tight')
-fig.savefig(f'{args.out_dir}/training_QC/mz_correction.svg', bbox_inches = 'tight')
-
-#m/z error vs m/z
-fig, ax = plt.subplots()
-ax.scatter(lipid_data['Average Mz'], lipid_data['mz_error'], s = ptsize, c = colors, marker = '.')
-clb = fig.colorbar(sm, ax = ax, location = 'right')
-clb.set_label('Score', fontsize = fsize)
-ax.set_ylabel('m/z Error', fontsize = fsize)
-ax.set_xlabel('Average m/z', fontsize = fsize)
-fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.png', dpi = 1000, bbox_inches = 'tight')
-fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.svg', bbox_inches = 'tight')
+    ax.set_ylabel('m/z Error', fontsize = fsize)
+    ax.set_xlabel('Average m/z', fontsize = fsize)
+    fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.png', dpi = 1000, bbox_inches = 'tight')
+    fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.svg', bbox_inches = 'tight')
 
 
 
