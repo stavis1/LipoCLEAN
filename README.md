@@ -37,3 +37,9 @@ A .txt will now be generated in the chosen directory with the information requir
 5. Save in a tab-delimited format.
 
 The training script is capable of being trained on multiple input files. The retention time correction is run on a per-input-file basis so all of the entries in each file should have been run with the same chromatography. Multiple experiments can be used to generate training data, but it is suggested that they are input as separate files for chromatography alignment purposes. 
+
+## Docker version
+A docker image, along with the pre-trained model is available through dockerhub.
+
+For inference run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/msdpostprocess MSDpostprocess-inference.py --input /data/yourdata1.txt,/data/yourdata2.txt --out_dir /data/`
+The inference script will use the provided `model.dill` by default. If you wish to use a different model file it can be specified using the `--model` flag.
