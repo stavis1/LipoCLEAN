@@ -15,7 +15,7 @@ from itertools import combinations
 ###### input data
 parser = argparse.ArgumentParser(
                     prog='MS-Dial lipid postprocessor inferenece',
-                    description='Filters MS-Dial putative lipid identifications into good, bad, and requires manual reanalysis bins.')
+                    description='Filters MS-Dial putative lipid identifications into positive, negative, and requires manual reanalysis bins.')
 parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='Modified msp output from MS-Dial, see README for details.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
@@ -27,9 +27,9 @@ parser.add_argument('-p', '--ppm', action = 'store_true', required = False,
 parser.add_argument('-n', '--no_plots', action = 'store_true', required = False,
                     help='Generate plots to troubleshoot poor predictions. Default is to generate plots.')
 parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
-                    help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2')
+                    help='Putative IDs with a final model score below this value are labeled negative IDs. Default = 0.2')
 parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
-                    help='Putative IDs with a final model score above this value are labeled good IDs. Default = 0.8')
+                    help='Putative IDs with a final model score above this value are labeled positive IDs. Default = 0.8')
 parser.add_argument('-o', '--out_dir', action = 'store', required = True,
                     help='Directory for all outputs to be written to.')
 args = parser.parse_args()
@@ -50,8 +50,8 @@ from sklearn.metrics import roc_auc_score
 rng = np.random.default_rng(1234)
 
 prepred_cut = 0.8
-cut_high = args.cutoff_high #above this score lipid IDs are classed as good
-cut_low = args.cutoff_low #below this score lipid IDs are classed as bad
+cut_high = args.cutoff_high #above this score lipid IDs are classed as positive
+cut_low = args.cutoff_low #below this score lipid IDs are classed as negative
 #between the above two scores lipid IDs are set aside for manual reanalysis
 
 #predicts the unit normalized intensities of the first three isotopic peaks for a particular formula
@@ -225,54 +225,52 @@ with open(f'{args.out_dir}/model.dill', 'wb') as pkl:
 print('writing QC information')
 
 #confusion matricies for the m/z prefilter model
+cm_cols = ['Negative', 'Positive']
+cm_rows = ['Predicted Negative', 'Predicted Positive']
 mz_test_confuse = pd.DataFrame(confusion_matrix(lipid_data[lipid_data['test_set']]['label'],
                                                  lipid_data[lipid_data['test_set']]['mz_prepred']),
-                                index = ['Predicted Bad', 'Predicted Good'],
-                                columns = ['Bad', 'Good'])
+                                index = cm_rows, columns = cm_cols)
 mz_test_confuse.to_csv(f'{args.out_dir}/training_QC/test_set_confusion_matrix_mz_model.tsv', sep = '\t')
 
 mz_train_confuse = pd.DataFrame(confusion_matrix(lipid_data[np.logical_not(lipid_data['test_set'])]['label'],
                                                   lipid_data[np.logical_not(lipid_data['test_set'])]['mz_prepred']),
-                                 index = ['Predicted Bad', 'Predicted Good'],
-                                 columns = ['Bad', 'Good'])
+                                 index = cm_rows, columns = cm_cols)
 mz_train_confuse.to_csv(f'{args.out_dir}/training_QC/train_set_confusion_matrix_mz_model.tsv', sep = '\t')
 
 
 #confusion matricies for the RT prefilter model
 rt_test_confuse = pd.DataFrame(confusion_matrix(lipid_data[lipid_data['test_set']]['label'],
                                                  [s > prepred_cut for s in lipid_data[lipid_data['test_set']]['rt_prepred']]),
-                                index = ['Predicted Bad', 'Predicted Good'],
-                                columns = ['Bad', 'Good'])
+                                index = cm_rows, columns = cm_cols)
 rt_test_confuse.to_csv(f'{args.out_dir}/training_QC/test_set_confusion_matrix_rt_model.tsv', sep = '\t')
 
 rt_train_confuse = pd.DataFrame(confusion_matrix(lipid_data[np.logical_not(lipid_data['test_set'])]['label'],
                                                   [s > prepred_cut for s in lipid_data[np.logical_not(lipid_data['test_set'])]['rt_prepred']]),
-                                 index = ['Predicted Bad', 'Predicted Good'],
-                                 columns = ['Bad', 'Good'])
+                                 index = cm_rows, columns = cm_cols)
 rt_train_confuse.to_csv(f'{args.out_dir}/training_QC/train_set_confusion_matrix_rt_model.tsv', sep = '\t')
 
 #confusion matricies for the final model
+cm_cols = ['null', 'Negative', 'Positive']
+cm_rows = ['Reanalyze', 'Predicted Negative', 'Predicted Positive']
 lipid_data['pred_label'] = [1 if s > cut_high else 0 if s < cut_low else -1 for s in lipid_data['score']]
 test_confuse = pd.DataFrame(confusion_matrix(lipid_data[lipid_data['test_set']]['pred_label'],
                                                  lipid_data[lipid_data['test_set']]['label']),
-                                index = ['Reanalyze', 'Predicted Bad', 'Predicted Good'],
-                                columns = ['null', 'Bad', 'Good'])
+                            index = cm_rows, columns = cm_cols)
 test_confuse.pop('null')
 test_confuse.to_csv(f'{args.out_dir}/training_QC/test_set_confusion_matrix_full_model.tsv', sep = '\t')
 
 train_confuse = pd.DataFrame(confusion_matrix(lipid_data[np.logical_not(lipid_data['test_set'])]['pred_label'],
                                               lipid_data[np.logical_not(lipid_data['test_set'])]['label']),
-                                index = ['Reanalyze', 'Predicted Bad', 'Predicted Good'],
-                                columns = ['null', 'Bad', 'Good'])
+                             index = cm_rows, columns = cm_cols)
 train_confuse.pop('null')
 train_confuse.to_csv(f'{args.out_dir}/training_QC/train_set_confusion_matrix_full_model.tsv', sep = '\t')
 
 #write outputs
-lipid_data[lipid_data['pred_label'] == 1].to_csv(f'{args.out_dir}/training_QC/good_lipids.tsv', 
+lipid_data[lipid_data['pred_label'] == 1].to_csv(f'{args.out_dir}/training_QC/positive_lipids.tsv', 
                                                                sep = '\t', index = False)
 lipid_data[lipid_data['pred_label'] == -1].to_csv(f'{args.out_dir}/training_QC/reanalyze_lipids.tsv', 
                                                                                sep = '\t', index = False)
-lipid_data[lipid_data['pred_label'] == 0].to_csv(f'{args.out_dir}/training_QC/bad_lipids.tsv', 
+lipid_data[lipid_data['pred_label'] == 0].to_csv(f'{args.out_dir}/training_QC/negative_lipids.tsv', 
                                                               sep = '\t', index = False)
 
 params = pd.DataFrame({'Parameter':vars(args).keys(),
@@ -324,8 +322,8 @@ if not args.no_plots:
         ax.set_title(f'Experiment {exp}')
         fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.png', 
                     dpi = 1000, bbox_inches = 'tight')
-        fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.svg', 
-                    bbox_inches = 'tight')
+        # fig.savefig(f'{args.out_dir}/training_QC/RT_alignment_exp_{exp}.svg', 
+        #             bbox_inches = 'tight')
         plt.close('all')
     
     log_pred = {'Dot product':False, 'S/N average':True, 'iso_mse':True, 'mz_error':False, 'rt_error':False} #whether to plot each predictor on a log scale
@@ -349,8 +347,8 @@ if not args.no_plots:
         clb.set_label('Score', fontsize = fsize)
         fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.png', 
                     dpi = 1000, bbox_inches = 'tight')
-        fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.svg', 
-                    bbox_inches = 'tight')
+        # fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_scores.svg', 
+        #             bbox_inches = 'tight')
         plt.close('all')
     
     #the same scatterplots as above but colored by each point's position in the confusion matrix
@@ -390,8 +388,8 @@ if not args.no_plots:
         ax.set_xlabel(pair[0], fontsize = fsize)
         fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.png', 
                     dpi = 1000, bbox_inches = 'tight')
-        fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.svg', 
-                    bbox_inches = 'tight')
+        # fig.savefig(f'{args.out_dir}/training_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}_categories.svg', 
+        #             bbox_inches = 'tight')
         plt.close('all')
         
     #individual predictors correlation with final scores
@@ -415,7 +413,7 @@ if not args.no_plots:
         ax.set_ylabel('Score', fontsize = fsize)
         ax.set_xlabel(predictor, fontsize = fsize)
         fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.png', dpi = 1000, bbox_inches = 'tight')
-        fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
+        # fig.savefig(f'{args.out_dir}/training_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
     
     #ROC plots
     for train,data in enumerate([lipid_data[lipid_data['test_set']],
@@ -451,7 +449,7 @@ if not args.no_plots:
                    s = ptsize, color = 'r', marker = '.')
         _=[ax.text(fpr, tpr, txt, ha = 'left', va = 'top') for fpr,tpr,txt in zip([high_fpr, low_fpr],
                                                                                   [high_tpr, low_tpr],
-                                                                                  ['Good Cutoff', 'Reanalyze Cutoff'])]
+                                                                                  ['Positive Cutoff', 'Reanalyze Cutoff'])]
         
         y0,y1 = ax.get_ylim()
         x0,x1 = ax.get_xlim()
@@ -464,13 +462,13 @@ if not args.no_plots:
         ax.set_title(f'{"Train" if train else "Test"} Set ROC')
         ax.annotate(f'AUC: {"%.2f"%(aucroc)}', (0.5,0.5), ha='left', va='top')
         fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.png', dpi = 1000, bbox_inches = 'tight')
-        fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.svg', bbox_inches = 'tight')
+        # fig.savefig(f'{args.out_dir}/training_QC/{"train" if train else "test"}_roc.svg', bbox_inches = 'tight')
     
-    #score distributions of good and bad lipids
+    #score distributions of positive and negative examples
     bins = np.linspace(min(lipid_data['score']),max(lipid_data['score']),80)
     fig, ax = plt.subplots()
-    ax.hist(lipid_data[lipid_data['label'] == 1]['score'], bins = bins, color = 'k', alpha = 0.5, label = 'Good Lipids')
-    ax.hist(lipid_data[lipid_data['label'] == 0]['score'], bins = bins, color = 'r', alpha = 0.5, label = 'Bad Lipids')
+    ax.hist(lipid_data[lipid_data['label'] == 1]['score'], bins = bins, color = 'k', alpha = 0.5, label = 'True Identifications')
+    ax.hist(lipid_data[lipid_data['label'] == 0]['score'], bins = bins, color = 'r', alpha = 0.5, label = 'False Identifications')
     ax.set_xlim(0,1)
     ylim = ax.get_ylim()
     ax.plot([cut_low]*2, ylim, '-b', linewidth = 0.5)
@@ -480,7 +478,7 @@ if not args.no_plots:
     ax.set_xlabel('Final Model Scores', fontsize = fsize)
     ax.set_ylabel('Count', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.svg', bbox_inches = 'tight')
+    # fig.savefig(f'{args.out_dir}/training_QC/ScoresDistribution.svg', bbox_inches = 'tight')
     
     #plot m/z correction
     fig, ax = plt.subplots()
@@ -489,7 +487,7 @@ if not args.no_plots:
     ax.legend()
     ax.set_xlabel('Delta m/z', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/training_QC/mz_correction.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/mz_correction.svg', bbox_inches = 'tight')
+    # fig.savefig(f'{args.out_dir}/training_QC/mz_correction.svg', bbox_inches = 'tight')
     
     #m/z error vs m/z
     fig, ax = plt.subplots()
@@ -499,7 +497,7 @@ if not args.no_plots:
     ax.set_ylabel('m/z Error', fontsize = fsize)
     ax.set_xlabel('Average m/z', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.svg', bbox_inches = 'tight')
+    # fig.savefig(f'{args.out_dir}/training_QC/mz_errorVmz.svg', bbox_inches = 'tight')
 
 
 

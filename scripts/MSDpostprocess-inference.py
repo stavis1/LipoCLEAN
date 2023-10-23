@@ -13,7 +13,7 @@ import argparse
 ###### input data
 parser = argparse.ArgumentParser(
                     prog='MS-Dial lipid postprocessor inferenece',
-                    description='Filters MS-Dial putative lipid identifications into good, bad, and requires manual reanalysis bins.')
+                    description='Filters MS-Dial putative lipid identifications into positive, negative, and requires manual reanalysis bins.')
 parser.add_argument('-i', '--input', action = 'store', required = True,
                     help='msp output from MS-Dial. Multiple files from the same experiment can be input, e.g. positive and negative mode.')
 parser.add_argument('-r', '--min_rt', action = 'store', required = False, default = 0.0, type = float,
@@ -21,9 +21,9 @@ parser.add_argument('-r', '--min_rt', action = 'store', required = False, defaul
 parser.add_argument('-f', '--lowess_frac', action = 'store', required = False, default = 0.15, type = float,
                     help='Fraction of data used per point in the Lowess regresson for RT correction. Default = 0.1')
 parser.add_argument('-l', '--cutoff_low', action = 'store', required = False, default = 0.3, type = float,
-                    help='Putative IDs with a final model score below this value are labeled bad IDs. Default = 0.2.')
+                    help='Putative IDs with a final model score below this value are labeled negative IDs. Default = 0.2.')
 parser.add_argument('-t', '--cutoff_high', action = 'store', required = False, default = 0.8, type = float,
-                    help='Putative IDs with a final model score above this value are labeled good IDs. Default = 0.8.')
+                    help='Putative IDs with a final model score above this value are labeled positive IDs. Default = 0.8.')
 parser.add_argument('-m', '--model', action = 'store', required = False, default = '/model.dill',
                     help='Pickled random forest model file created by training script. In the docker version if the file is not provided the default model will be used.')
 parser.add_argument('-n', '--no_plots', action = 'store_true', required = False,
@@ -33,8 +33,8 @@ parser.add_argument('-p', '--ppm', action = 'store_true', required = False,
 parser.add_argument('-o', '--out_dir', action = 'store', required = True,
                     help='Directory for all outputs to be written to.')
 args = parser.parse_args()
-cut_high = args.cutoff_high #above this score lipid IDs are classed as good
-cut_low = args.cutoff_low #below this score lipid IDs are classed as bad
+cut_high = args.cutoff_high #above this score lipid IDs are classed as positive
+cut_low = args.cutoff_low #below this score lipid IDs are classed as negative
 
 
 import dill
@@ -102,7 +102,7 @@ if any(lipid_data[c].dtype.kind != 'f' for c in mz_cols):
 #calculate predictors
 lipid_data['iso_mse'] = [iso_mse(o,iso_packet(f)) for o,f in zip(lipid_data['MS1 isotopic spectrum'],lipid_data['Formula'])]
 
-#initial prediction of good lipids for fitting the m/z correction
+#initial prediction of positive lipids for fitting the m/z correction
 predictor_cols = ['iso_mse', 'Dot product', 'S/N average']
 lipid_data['mz_prepred'] = mz_model.predict(lipid_data[predictor_cols])
 mz_set = lipid_data[lipid_data['mz_prepred'] == 1]
@@ -133,7 +133,7 @@ lipid_data['mz_error'] = np.nanmean(lipid_data[mz_cols], axis = 1)
 if not args.no_plots:
     final_deltas = lipid_data[mz_cols].to_numpy().flatten()
 
-#initial prediction of good lipids for fitting the RT alignment
+#initial prediction of positive lipids for fitting the RT alignment
 predictor_cols = ['Dot product', 'S/N average', 'iso_mse', 'mz_error']
 lipid_data['rt_prepred'] = rt_model.predict_proba(lipid_data[predictor_cols])[:,1]
 rt_set = lipid_data[lipid_data['rt_prepred'] > prepred_cut]
@@ -154,11 +154,11 @@ lipid_data['score'] = model.predict_proba(lipid_data[predictor_cols])[:,1]
 
 #write outputs
 lipid_data['pred_label'] = [1 if s > cut_high else 0 if s < cut_low else -1 for s in lipid_data['score']]
-lipid_data[lipid_data['pred_label'] == 1].to_csv(f'{args.out_dir}/good_lipids.tsv', 
+lipid_data[lipid_data['pred_label'] == 1].to_csv(f'{args.out_dir}/positive_lipids.tsv', 
                                                                sep = '\t', index = False)
 lipid_data[lipid_data['pred_label'] == -1].to_csv(f'{args.out_dir}/reanalyze_lipids.tsv', 
                                                                                sep = '\t', index = False)
-lipid_data[lipid_data['pred_label'] == 0].to_csv(f'{args.out_dir}/bad_lipids.tsv', 
+lipid_data[lipid_data['pred_label'] == 0].to_csv(f'{args.out_dir}/negative_lipids.tsv', 
                                                               sep = '\t', index = False)
 
 params = pd.DataFrame({'Parameter':vars(args).keys(),
@@ -209,8 +209,8 @@ if not args.no_plots:
     ax.set_xlabel('Observed RT')
     fig.savefig(f'{args.out_dir}/inference_QC/RT_alignment.PNG', 
                 dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/inference_QC/RT_alignment.svg', 
-                bbox_inches = 'tight')
+    # fig.savefig(f'{args.out_dir}/inference_QC/RT_alignment.svg', 
+    #             bbox_inches = 'tight')
 
     log_pred = {'Dot product':False, 'S/N average':True, 'iso_mse':True, 'mz_error':False, 'rt_error':False}
 
@@ -231,8 +231,8 @@ if not args.no_plots:
         clb.set_label('Score', fontsize = fsize)
         fig.savefig(f'{args.out_dir}/inference_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}.png', 
                     dpi = 1000, bbox_inches = 'tight')
-        fig.savefig(f'{args.out_dir}/inference_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}.svg', 
-                    bbox_inches = 'tight')
+        # fig.savefig(f'{args.out_dir}/inference_QC/{pair[0].replace("/","")}-{pair[1].replace("/","")}.svg', 
+        #             bbox_inches = 'tight')
         plt.close('all')
 
     
@@ -251,7 +251,7 @@ if not args.no_plots:
         ax.set_ylabel('Score', fontsize = fsize)
         ax.set_xlabel(predictor, fontsize = fsize)
         fig.savefig(f'{args.out_dir}/inference_QC/{predictor.replace("/","")}.png', dpi = 1000, bbox_inches = 'tight')
-        fig.savefig(f'{args.out_dir}/inference_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
+        # fig.savefig(f'{args.out_dir}/inference_QC/{predictor.replace("/","")}.svg', bbox_inches = 'tight')
 
     #score distribuiton
     fig, ax = plt.subplots()
@@ -264,7 +264,7 @@ if not args.no_plots:
     ax.set_xlabel('Final Model Scores', fontsize = fsize)
     ax.set_ylabel('Count', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/inference_QC/ScoresDistribution.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/inference_QC/ScoresDistribution.svg', bbox_inches = 'tight')
+    # fig.savefig(f'{args.out_dir}/inference_QC/ScoresDistribution.svg', bbox_inches = 'tight')
 
     #plot m/z correction
     fig, ax = plt.subplots()
@@ -273,7 +273,7 @@ if not args.no_plots:
     ax.legend()
     ax.set_xlabel('Delta m/z', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.svg', bbox_inches = 'tight')
+    # fig.savefig(f'{args.out_dir}/inference_QC/mz_correction.svg', bbox_inches = 'tight')
 
     #m/z error vs m/z
     fig, ax = plt.subplots()
@@ -283,5 +283,5 @@ if not args.no_plots:
     ax.set_ylabel('m/z Error', fontsize = fsize)
     ax.set_ylabel('Average m/z', fontsize = fsize)
     fig.savefig(f'{args.out_dir}/inference_QC/mz_errorVmz.png', dpi = 1000, bbox_inches = 'tight')
-    fig.savefig(f'{args.out_dir}/inference_QC/mz_errorVmz.svg', bbox_inches = 'tight')
+    # fig.savefig(f'{args.out_dir}/inference_QC/mz_errorVmz.svg', bbox_inches = 'tight')
 
