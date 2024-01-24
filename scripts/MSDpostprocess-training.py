@@ -84,6 +84,8 @@ def FPR(tn,fp,fn,tp):
     else:
         return fp/divisor
 
+if not os.path.exists(args.out_dir):
+    os.mkdir(args.out_dir)
 os.mkdir(f'{args.out_dir}/training_QC')
 
 ###### initial data processing

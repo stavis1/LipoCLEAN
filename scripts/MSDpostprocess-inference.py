@@ -9,6 +9,7 @@ Created on Wed Jun 28 12:18:10 2023
 import re
 from functools import cache
 import argparse
+import os
 
 ###### input data
 parser = argparse.ArgumentParser(
@@ -64,6 +65,9 @@ def iso_mse(observed, expected):
     return np.mean((obs/results.x - exp)**2)
 
 prepred_cut = 0.8
+
+if not os.path.exists(args.out_dir):
+    os.mkdir(args.out_dir)
 
 ###### initial data processing
 lipid_data = []
@@ -166,12 +170,12 @@ params = pd.DataFrame({'Parameter':vars(args).keys(),
 params.to_csv(f'{args.out_dir}/inference_parameters.tsv', sep = '\t', index = False)
 
 if not args.no_plots:
-    import os
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from matplotlib import cm
     from itertools import combinations
+
     
     os.mkdir(f'{args.out_dir}/inference_QC')
     
