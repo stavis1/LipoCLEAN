@@ -1,4 +1,4 @@
-# MSDpostprocess: A machine learning based quality filter for lipid identifications from MS-Dial
+# MSDpostprocess: A machine learning based quality filter for lipid identifications from MS-DIAL
 
 ## Set up a local conda environment
 MSDPostprocess consists of a pair of python scripts, one for training and one for inference. The dependencies for these scripts are laid out in environments/MSDpostprocess.yml.
@@ -30,7 +30,7 @@ On some Windows environments the warning `No module named 'brainpy._c.compositio
 A .txt will now be generated in the chosen directory with the information required for the MSDpostprocess script. The file name will start with "Mz"
 
 ## Prepare training data
-1. Start with MS-Dial exports using the same settings as described above for running the inference script. 
+1. Start with MS-DIAL exports using the same settings as described above for running the inference script. 
 2. Delete the metadata rows so that the column headers are now the first row of the document. 
 3. Add a column named `label` which contains 0 for incorrect IDs and 1 for correct IDs. It is critical that this column be before (to the left of) the `MS/MS spectrum` column as all subsequent columns (those to the right) are assumed to be m/z data. 
 4. Remove all entries that you do not manually label.
