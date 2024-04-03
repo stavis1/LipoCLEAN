@@ -1,0 +1,12 @@
+#
+working_directory = '/home/4vt/Documents/data/SLT05_MSDpostprocess/MSDpostprocess/example_data'
+data = []
+seed = 1
+min_rt = 7
+lowess_frac = 0.15
+ppm = False
+cutoff_low = 0.3
+cutoff_high = 0.8
+model = 
+overwrite = True
+cores = 8
