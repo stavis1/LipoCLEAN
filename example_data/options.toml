@@ -10,7 +10,7 @@ min_rt = 7
 #increase this value if the RT regression plot seems excessively sensitive to noise
 #reduce this value if RT regression fails to fit real features of the data
 lowess_frac = 0.15
-#
+#whether calculated m/z error should be in units of ppm. If false units are Da.
 ppm = false
 #persistant model file
 model = 'test_model'
@@ -29,13 +29,12 @@ output = 'test'
 [cutoffs]
 mz_correction = 0.5
 rt_correction = 0.5
-#below the first element predictions are classed false
-#above the second they're classed true
+#below the first element predictions are classed negative
+#above the second they're classed positive
 #in between they're classed needs_reanalysis
 predictor_model = [0.3,0.8]
 
-#If you have access to CCS information put the column name in these lists
 [features]
-mz_correction = ['iso_mse', 'Dot product', 'S/N average']
-rt_correction = ['Dot product', 'S/N average', 'iso_mse', 'mz_error']
-predictor_model = ['Dot product', 'S/N average', 'iso_mse', 'mz_error', 'rt_error']
+mz_correction = ['Dot product', 'S/N average', 'isotope_error']
+rt_correction = ['Dot product', 'S/N average', 'isotope_error', 'mz_error']
+predictor_model = ['Dot product', 'S/N average', 'isotope_error', 'mz_error', 'rt_error']
