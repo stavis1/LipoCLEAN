@@ -8,15 +8,45 @@ Created on Wed Apr  3 10:14:41 2024
 import sys
 sys.argv.extend('--options /home/4vt/Documents/data/SLT05_MSDpostprocess/MSDpostprocess/example_data/options.toml'.split())
 
-from MSDpostprocess.options import options
+from MSDpostprocess.options import options, setup_workspace, validate_inputs
+from MSDpostprocess.utilities import read_files, filter_data, split_index, write_data
+from MSDpostprocess.models import mz_correction, rt_correction, predictor_model, add_isotope_error
+
 args = options()
+validate_inputs(args)
+setup_workspace(args)
 
-from MSDpostprocess import utilities
-from MSDpostprocess.models import mz_correction, rt_correction, predictor_model
+lipid_data = read_files(args)
+lipid_data = filter_data(lipid_data, args)
+lipid_data = add_isotope_error(lipid_data)
 
-lipid_data = utilities.read_files(args)
-lipid_data = utilities.filter_data(lipid_data, args)
+mz_model = mz_correction(args)
+rt_model = rt_correction(args)
+final_model = predictor_model(args)   
 
 if args.mode == 'train':
-    train_data, test_data = utilities.split_data(lipid_data, args)
+    train_idx, test_idx = split_index(lipid_data, args)
     
+    mz_model.fit(lipid_data.loc[train_idx])
+    mz_model.dump()
+    # mz_model.assess(lipid_data.loc[test_idx])
+    lipid_data = mz_model.correct_data(lipid_data)
+
+    rt_model.fit(lipid_data.loc[train_idx])
+    rt_model.dump()
+    # rt_model.assess(lipid_data.loc[test_idx])
+    lipid_data = rt_model.correct_data(lipid_data)
+    
+    final_model.fit(lipid_data.loc[train_idx])
+    final_model.dump()
+    # final_model.assess(lipid_data.loc[test_idx])
+    
+else:
+    mz_model.load()
+    rt_model.load()
+    final_model.load()
+    lipid_data = mz_model.correct_data(lipid_data)
+    lipid_data = rt_model.correct_data(lipid_data)
+
+lipid_data = final_model.classify(lipid_data)
+write_data(lipid_data, args)
