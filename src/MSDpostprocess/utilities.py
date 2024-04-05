@@ -8,10 +8,10 @@ Created on Wed Apr  3 12:26:02 2024
 import numpy as np
 import pandas as pd
 import os
-   
+
 def read_files(args):
     dfs = []
-    for file in args.data:
+    for i,file in enumerate(args.data):
         #read data and accout for potential metadata headers
         with open(file, 'r') as text:
             line = text.readline().split('\t')
@@ -27,12 +27,11 @@ def read_files(args):
             print('m/z columns:\n' + '\n'.join(mz_cols))
             raise Exception()
     
-        lipid_data['file'] = [file]*lipid_data.shape[0]
         
         newcols = list(lipid_data.columns)[:list(lipid_data.columns).index('MS/MS spectrum')+1]
-        newcols.append('file')
-        newcols.extend([f'observed_mz_{c}' for c in mz_cols])
+        newcols.extend([f'observed_mz_F{i}_{c}' for c in mz_cols])
         lipid_data.columns = newcols
+        lipid_data['file'] = [file]*lipid_data.shape[0]
         dfs.append(lipid_data)
     lipid_data = pd.concat(dfs, ignore_index = True)
     return lipid_data
@@ -59,15 +58,27 @@ def filter_data(lipid_data, args):
     bad_rows = lipid_data.loc[bad_idx]
     bad_rows.to_csv(os.path.join(args.output, 'not_considered.tsv'), sep = '\t', index = False)
     lipid_data.drop(bad_idx, inplace=True)
-    return
+    return lipid_data
 
-def split_data(lipid_data, args):
+def split_index(lipid_data, args):
     rng = np.random.default_rng(args.seed)
 
-    split_idx = set(rng.choice(lipid_data.index, 
-                               lipid_data.shape[0]//args.test_split))
-    train_data = lipid_data[[i not in split_idx for i in lipid_data.index]]
-    test_data = lipid_data[split_idx]
-    return (train_data, test_data)
+    train_idx = rng.choice(lipid_data.index, 
+                           int(lipid_data.shape[0]*args.test_split),
+                           replace = False)
+    test_idx = set(lipid_data.index).difference(train_idx)
+    return (np.array(train_idx), np.array(list(test_idx)))
 
+def write_data(lipid_data, args):
+    last_mz_col = [c for c in lipid_data.columns if c.startswith('observed_mz_')][-1]
+    last_mz_idx = list(lipid_data.columns).index(last_mz_col) + 1
+    new_cols = list(lipid_data.columns[last_mz_idx:])
+    old_cols = list(lipid_data.columns[:last_mz_idx])
+    lipid_data = lipid_data[new_cols + old_cols]
+    groups = lipid_data.groupby('class')
+    categories = {-1:'negative_lipids.tsv',
+                  0:'reanalyze_lipids.tsv',
+                  1:'positive_lipids.tsv'}
+    for cat, data in groups:
+        data.to_csv(os.path.join(args.output, categories[cat]), sep = '\t', index = False)
 
