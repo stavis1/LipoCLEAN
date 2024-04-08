@@ -23,6 +23,7 @@ class model():
         self.probs = {}
         self.labels = {}
         self.calls = {}
+        self.logs = args.logs
     
     def load(self):
         with shelve.open(self.db) as db:
@@ -42,6 +43,7 @@ class model():
         self.classifier = GBC(n_estimators = 40)
         self.classifier.fit(data[self.features], 
                             data['label'])
+        self.logs.info(f'Fit {self.model}')
     
     def assess(self, data, tag):
         self.probs[tag] = self._predict_prob(data)
@@ -101,6 +103,8 @@ class mz_correction(prelim_model):
         if self.ppm:
             mz_error = (mz_error/data['Reference m/z'])*1e6
         data['mz_error'] = mz_error
+        
+        self.logs.info('m/z correction has been applied.')
         return data
     
 class rt_correction(prelim_model):
@@ -135,6 +139,8 @@ class rt_correction(prelim_model):
         
         data['rt_error'] = data.groupby('file').apply(rt_error).T
         data = data.drop(columns = ['call'])
+        
+        self.logs.info('RT correction has been applied.')
         return data
 
 class predictor_model(model):
@@ -145,6 +151,7 @@ class predictor_model(model):
 
     def classify(self, data):
         data['class'] = self.predict(data)
+        self.logs.info('Final classification is complete.')
         return data
     
 

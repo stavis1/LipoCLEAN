@@ -23,16 +23,17 @@ def read_files(args):
         #find and rename m/z matrix columns
         mz_cols = list(lipid_data.columns)[list(lipid_data.columns).index('MS/MS spectrum')+1:]
         if any(lipid_data[c].dtype.kind != 'f' for c in mz_cols):
-            print('Invalid data types found in m/z columns. This could be due to non m/z columns being inserted after "MS/MS spectrum". Please check', flush = True)
-            print('m/z columns:\n' + '\n'.join(mz_cols))
+            msg = 'Invalid data types found in m/z columns. This could be due to non m/z columns being inserted after "MS/MS spectrum". Please check'
+            msg += 'm/z columns:\n' + '\n'.join(mz_cols) 
+            args.logs.error(msg)
             raise Exception()
-    
         
         newcols = list(lipid_data.columns)[:list(lipid_data.columns).index('MS/MS spectrum')+1]
         newcols.extend([f'observed_mz_F{i}_{c}' for c in mz_cols])
         lipid_data.columns = newcols
         lipid_data['file'] = [file]*lipid_data.shape[0]
         dfs.append(lipid_data)
+        args.logs.debug(f'{file} read with shape {lipid_data.shape}')
     lipid_data = pd.concat(dfs, ignore_index = True)
     return lipid_data
 
@@ -53,7 +54,8 @@ def filter_data(lipid_data, args):
     bad_idx.extend(lipid_data[[any(np.isnan(v)) for v in zip(*[lipid_data[c] for c in nonnancols])]].index)
     bad_idx.extend(lipid_data[[type(s) != str for s in lipid_data['MS1 isotopic spectrum']]].index)
     bad_idx = list(set(bad_idx))
-    print(f'{len(bad_idx)} entries not considered\n', flush = True)
+    
+    args.logs.info(f'{len(bad_idx)} entries not considered.')
 
     bad_rows = lipid_data.loc[bad_idx]
     bad_rows.to_csv(os.path.join(args.output, 'not_considered.tsv'), sep = '\t', index = False)
@@ -84,4 +86,6 @@ def write_data(lipid_data, args):
                   1:'positive_lipids.tsv'}
     for cat, data in groups:
         data.to_csv(os.path.join(args.output, categories[cat]), sep = '\t', index = False)
+    
+    args.logs.info('Classified data have been saved.')
 

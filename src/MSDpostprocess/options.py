@@ -7,6 +7,7 @@ Created on Wed Apr  3 10:44:52 2024
 """
 import os
 from shutil import copy2
+import logging
 
 class options:
     def __init__(self):
@@ -23,6 +24,20 @@ class options:
             options = tomllib.load(toml)
         self.__dict__.update(options)
         
+        #set up logger
+        self.logs = logging.getLogger('MSDpostprocess')
+        self.logs.setLevel(10)
+        formatter = formatter = logging.Formatter('%(asctime)s | %(levelname)s: %(message)s')
+
+        logfile = logging.FileHandler(os.path.join(self.working_directory, 'MSDpostprocess.log'))
+        logfile.setLevel(10)
+        logfile.setFormatter(formatter)
+        self.logs.addHandler(logfile)
+        
+        logstream = logging.StreamHandler()
+        logstream.setLevel(self.log_level)
+        logstream.setFormatter(formatter)
+        self.logs.addHandler(logstream)
 
 def validate_inputs(args):
     #check that the options toml is valid
@@ -40,16 +55,18 @@ def validate_inputs(args):
                 'output']
     problems = [r for r in required if not r in args.__dict__.keys()]
     if problems:
-        raise Exception('Required settings not found in options file:\n' + \
-                        '\n'.join(problems))
+        args.logs.error('Required settings not found in options file:\n' + '\n'.join(problems))
+        raise Exception()
 
     if args.mode == 'infer' and not os.path.exists(args.model):
-        raise Exception('Attempting inference without a pre-trained model.')
+        args.logs.error('Attempting inference without a pre-trained model.')
+        raise Exception()
     
     #prevent overwriting files
     if not args.overwrite:
         if args.mode == 'train' and os.path.exists(args.model):
-            raise Exception('Overwrite is false and a model with this name already exists')
+            args.logs.error('Overwrite is false and a model with this name already exists')
+            raise Exception()
         problems = []
         for file in ['not_considered.tsv', 
                      'positive_lipids.tsv', 
@@ -60,7 +77,8 @@ def validate_inputs(args):
             if os.path.exists(path):
                 problems.append(path)
         if problems:
-            raise Exception('Overwrite is false and these files exist:\n' + '\n'.join(problems))
+            args.logs.error('Overwrite is false and these files exist:\n' + '\n'.join(problems))
+            raise Exception()
 
 def setup_workspace(args):
     os.chdir(args.working_directory)

@@ -29,6 +29,8 @@ QC_plots = true
 #What file types to export. Must be a list, even with one value.
 #Can be any of 'png', 'jpg', 'pdf', 'svg'
 QC_plot_extensions = ['png']
+#Set the amount of information to be 
+log_level = 10
 
 [cutoffs]
 mz_correction = 0.5

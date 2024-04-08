@@ -173,6 +173,8 @@ def plot_mz_QC(mz_model, args):
                 os.path.join(args.output, f'QC/mz_correction_model_{subset}'),
                 filetypes)
 
+    args.logs.info('Generated m/z QC plots')
+
 def plot_rt_correction(observed, expected, predicted, calls, title, path, types):
     colors = ['k' if c else 'r' for c in calls]
     red_patch = mpatches.Patch(color='r', label='Not in Regression Set')
@@ -219,6 +221,8 @@ def plot_rt_QC(rt_model, args):
                 os.path.join(args.output, f'QC/rt_correction_model_{subset}'),
                 filetypes)
 
+    args.logs.info('Generated RT QC plots')
+
 
 def plot_final_QC(final_model, args):
     filetypes = args.QC_plot_extensions
@@ -237,3 +241,5 @@ def plot_final_QC(final_model, args):
                 f'Final Model {subset}', 
                 os.path.join(args.output, f'QC/final_model_{subset}'),
                 filetypes)
+
+    args.logs.info('Generated final QC plots')
