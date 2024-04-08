@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib.patches as mpatches
 import numpy as np
+import pandas as pd
 
 #settings
 fsize = 12
@@ -118,6 +119,24 @@ def mz_error_histograms(raw, corrected, title, path, types):
         fig.savefig(f'{path}.{filetype}', bbox_inches = 'tight', dpi = 500)
     plt.close('all')
 
+def write_metrics(calls, labels, scores, model, path):
+    from sklearn.metrics import confusion_matrix
+    from sklearn.metrics import roc_auc_score
+    calls = [c if c > 0 else 0 for c in calls]
+    tn,fp,fn,tp = confusion_matrix(labels, calls).flatten()
+    data = pd.DataFrame({'Model':model,
+                         'FDR':FDR(tn, fp, fn, tp),
+                         'FPR':FPR(tn, fp, fn, tp),
+                         'Recall':TPR(tn, fp, fn, tp),
+                         'AUCROC':roc_auc_score(labels, scores),
+                         'True Positives':tp,
+                         'False Positives':fp,
+                         'False Negatives':fn,
+                         'True Negatives':tn},
+                        index = [0])
+    header = not os.path.exists(path)
+    data.to_csv(path, mode = 'a', header = header, index = False, sep = '\t')
+
 def plot_mz_QC(mz_model, args):
     filetypes = args.QC_plot_extensions
     
@@ -130,17 +149,23 @@ def plot_mz_QC(mz_model, args):
                         os.path.join(args.output, 'QC/mz_correction'), 
                         filetypes)
     
-    # # per file plots
-    # for file in raw_vals.keys():
-    #     mz_error_histograms(raw_vals[file], 
-    #                         cor_vals[file], 
-    #                         f'{file} m/z Error Correction', 
-    #                         os.path.join(args.output, f'QC/per_file_plots/{file}_mz_correction'), 
-    #                         filetypes)
+    # per file plots
+    for file in raw_vals.keys():
+        mz_error_histograms(raw_vals[file], 
+                            cor_vals[file], 
+                            f'{file} m/z Error Correction', 
+                            os.path.join(args.output, f'QC/per_file_plots/{file}_mz_correction'), 
+                            filetypes)
     
     #ROC plots
     if args.mode == 'train':
         for subset in mz_model.labels.keys():
+            write_metrics(mz_model.calls[subset], 
+                          mz_model.labels[subset], 
+                          mz_model.probs[subset], 
+                          f'mz_model {subset}', 
+                          os.path.join(args.output, 'QC/metrics.tsv'))
+            
             ROC(mz_model.probs[subset], 
                 mz_model.labels[subset], 
                 [mz_model.cutoff], 
@@ -181,6 +206,12 @@ def plot_rt_QC(rt_model, args):
     #ROC plots
     if args.mode == 'train':
         for subset in rt_model.labels.keys():
+            write_metrics(rt_model.calls[subset], 
+                          rt_model.labels[subset], 
+                          rt_model.probs[subset], 
+                          f'rt_model {subset}', 
+                          os.path.join(args.output, 'QC/metrics.tsv'))
+            
             ROC(rt_model.probs[subset], 
                 rt_model.labels[subset], 
                 [rt_model.cutoff], 
@@ -191,10 +222,15 @@ def plot_rt_QC(rt_model, args):
 
 def plot_final_QC(final_model, args):
     filetypes = args.QC_plot_extensions
-    
     #ROC plots
     if args.mode == 'train':
         for subset in final_model.labels.keys():
+            write_metrics(final_model.calls[subset], 
+                          final_model.labels[subset], 
+                          final_model.probs[subset], 
+                          f'final_model {subset}', 
+                          os.path.join(args.output, 'QC/metrics.tsv'))
+            
             ROC(final_model.probs[subset], 
                 final_model.labels[subset], 
                 final_model.cutoff, 
