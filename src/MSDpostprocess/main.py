@@ -11,6 +11,7 @@ sys.argv.extend('--options /home/4vt/Documents/data/SLT05_MSDpostprocess/MSDpost
 from MSDpostprocess.options import options, setup_workspace, validate_inputs
 from MSDpostprocess.utilities import read_files, filter_data, split_index, write_data
 from MSDpostprocess.models import mz_correction, rt_correction, predictor_model, add_isotope_error
+from MSDpostprocess.QC import plot_mz_QC, plot_rt_QC, plot_final_QC
 
 args = options()
 validate_inputs(args)
@@ -29,17 +30,20 @@ if args.mode == 'train':
     
     mz_model.fit(lipid_data.loc[train_idx])
     mz_model.dump()
-    # mz_model.assess(lipid_data.loc[test_idx])
+    mz_model.assess(lipid_data.loc[train_idx], 'Training')
+    mz_model.assess(lipid_data.loc[test_idx], 'Test')
     lipid_data = mz_model.correct_data(lipid_data)
 
     rt_model.fit(lipid_data.loc[train_idx])
     rt_model.dump()
-    # rt_model.assess(lipid_data.loc[test_idx])
+    rt_model.assess(lipid_data.loc[train_idx], 'Training')
+    rt_model.assess(lipid_data.loc[test_idx], 'Test')
     lipid_data = rt_model.correct_data(lipid_data)
     
     final_model.fit(lipid_data.loc[train_idx])
     final_model.dump()
-    # final_model.assess(lipid_data.loc[test_idx])
+    final_model.assess(lipid_data.loc[train_idx], 'Training')
+    final_model.assess(lipid_data.loc[test_idx], 'Test')
     
 else:
     mz_model.load()
@@ -50,3 +54,8 @@ else:
 
 lipid_data = final_model.classify(lipid_data)
 write_data(lipid_data, args)
+
+if args.QC_plots:
+    plot_mz_QC(mz_model, args)
+    plot_rt_QC(rt_model, args)
+    plot_final_QC(final_model, args)

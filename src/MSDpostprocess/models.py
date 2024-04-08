@@ -20,6 +20,9 @@ class model():
         self.cutoff = args.cutoffs[self.model]
         self.features = args.features[self.model]
         self.db = args.model
+        self.probs = {}
+        self.labels = {}
+        self.calls = {}
     
     def load(self):
         with shelve.open(self.db) as db:
@@ -28,9 +31,6 @@ class model():
     def dump(self):
         with shelve.open(self.db) as db:
             db[self.model] = self    
-    
-    def assess(self):
-        pass
     
     def _predict_prob(self, data):
         probs = self.classifier.predict_proba(data[self.features])
@@ -42,17 +42,23 @@ class model():
         self.classifier = GBC(n_estimators = 40)
         self.classifier.fit(data[self.features], 
                             data['label'])
-
+    
+    def assess(self, data, tag):
+        self.probs[tag] = self._predict_prob(data)
+        self.calls[tag] = self.predict(data)
+        self.labels[tag] = data['label']
+    
 class prelim_model(model):   
     def predict(self, data):
         preds = self._predict_prob(data)
-        return preds > self.cutoff
-
+        preds = preds > self.cutoff
+        return preds
 
 class mz_correction(prelim_model):
     def __init__(self, args):
         super().__init__(args)
         self.ppm = args.ppm
+        self.save_data = args.QC_plots
 
     def correct_data(self, data):
         #identify high confidence subset for correction
@@ -63,6 +69,11 @@ class mz_correction(prelim_model):
         mz_cols = np.array([c for c in subset.columns if c.startswith('observed_mz_')])
         mz_exp = subset['Reference m/z'].to_numpy()
         mz_error = subset[mz_cols].to_numpy() - mz_exp[:,np.newaxis]
+        
+        #save initial m/z values for QC plotting
+        if self.save_data:
+            all_error = data[mz_cols].to_numpy() - data['Reference m/z'].to_numpy()[:,np.newaxis]
+            self.mz_initial = {c:all_error[np.isfinite(data[c]),i] for i,c in enumerate(mz_cols)}
         
         #calculate per-file midmeans of m/z error
         quartiles = np.nanquantile(mz_error, (0.25,0.75), axis = 0)
@@ -76,21 +87,30 @@ class mz_correction(prelim_model):
             print('\n'.join(mz_cols[mask]))
             midmeans[mask] = np.zeros(midmeans.shape)[mask]
         
-        #calculate mean corrected m/z error
+        #calculate corrected m/z error
         mz_exp = data['Reference m/z'].to_numpy()
         corr_mz = data[mz_cols].to_numpy() - midmeans[np.newaxis,:]
         mz_error = corr_mz - mz_exp[:,np.newaxis]
+
+        #save corrected m/z values for QC plotting
+        if self.save_data:
+            self.mz_corrected = {c:mz_error[np.isfinite(data[c]),i] for i,c in enumerate(mz_cols)}
+        
+        #add mean error as a predictor to data
         mz_error = np.nanmean(mz_error, axis = 1)
         if self.ppm:
             mz_error = (mz_error/data['Reference m/z'])*1e6
         data['mz_error'] = mz_error
         return data
-        
-
+    
 class rt_correction(prelim_model):
     def __init__(self, args):
         super().__init__(args)
         self.lowess_frac = args.lowess_frac
+        self.rt_predictions = {}
+        self.rt_expected = {}
+        self.rt_observed = {}
+        self.rt_calls = {}
     
     def correct_data(self, data):
         #identify high confidence subset for correction
@@ -105,6 +125,12 @@ class rt_correction(prelim_model):
                                 it = 3,
                                 xvals = subset['Average Rt(min)'])
             rt_error = subset['Reference RT'] - regression
+            #record regression for QC purposes
+            file = next(f for f in subset['file'])
+            self.rt_observed[file] = subset['Average Rt(min)']
+            self.rt_expected[file] = subset['Reference RT']
+            self.rt_predictions[file] = regression
+            self.rt_calls[file] = subset['call']
             return rt_error
         
         data['rt_error'] = data.groupby('file').apply(rt_error).T
@@ -112,11 +138,15 @@ class rt_correction(prelim_model):
         return data
 
 class predictor_model(model):
-    def classify(self, data):
+    def predict(self, data):
         preds = self._predict_prob(data)
-        classes = [-1 if p < self.cutoff[0] else 1 if p > self.cutoff[1] else 0 for p in preds]
-        data['class'] = classes
+        classes = [0 if p < self.cutoff[0] else 1 if p > self.cutoff[1] else -1 for p in preds]
+        return classes
+
+    def classify(self, data):
+        data['class'] = self.predict(data)
         return data
+    
 
 @cache
 def expected_isopacket(formula, npeaks):

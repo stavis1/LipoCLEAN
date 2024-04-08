@@ -70,14 +70,17 @@ def split_index(lipid_data, args):
     return (np.array(train_idx), np.array(list(test_idx)))
 
 def write_data(lipid_data, args):
+    #move newly created columns to the beginning of the table
     last_mz_col = [c for c in lipid_data.columns if c.startswith('observed_mz_')][-1]
     last_mz_idx = list(lipid_data.columns).index(last_mz_col) + 1
     new_cols = list(lipid_data.columns[last_mz_idx:])
     old_cols = list(lipid_data.columns[:last_mz_idx])
     lipid_data = lipid_data[new_cols + old_cols]
+    
+    #split data by classification and write files
     groups = lipid_data.groupby('class')
-    categories = {-1:'negative_lipids.tsv',
-                  0:'reanalyze_lipids.tsv',
+    categories = {-1:'reanalyze_lipids.tsv',
+                  0:'negative_lipids.tsv',
                   1:'positive_lipids.tsv'}
     for cat, data in groups:
         data.to_csv(os.path.join(args.output, categories[cat]), sep = '\t', index = False)

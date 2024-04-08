@@ -36,7 +36,7 @@ def validate_inputs(args):
                 'overwrite',
                 'mode',
                 'test_split',
-                # 'cores',
+                'QC_plots',
                 'output']
     problems = [r for r in required if not r in args.__dict__.keys()]
     if problems:
@@ -66,6 +66,13 @@ def setup_workspace(args):
     os.chdir(args.working_directory)
     if not os.path.exists(args.output):
         os.mkdir(args.output)
-    copy2(args.optfile, os.path.join(args.output, os.path.basename(args.optfile)))       
+    copy2(args.optfile, os.path.join(args.output, os.path.basename(args.optfile)))
+    if args.QC_plots:
+        qc_path = os.path.join(args.output, 'QC')
+        if not os.path.exists(qc_path):
+            os.mkdir(qc_path)
+        perfile_path = os.path.join(qc_path, 'per_file_plots')
+        if not os.path.exists(perfile_path):
+            os.mkdir(perfile_path)
 
         
