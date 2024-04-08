@@ -2,36 +2,40 @@
 #working_directory should be an absolute path
 working_directory = '/home/4vt/Documents/data/SLT05_MSDpostprocess/MSDpostprocess/example_data'
 data = ['training_data.tsv']
-#seed value for the rng used in train-test spliting
+#Seed value for the rng used in train-test spliting
 seed = 1
-#analytes eluting before this time (in minutes) will be categorized as not_considered
+#Analytes eluting before this time (in minutes) will be categorized as not_considered
 min_rt = 7
-#fraction of dat used for the lowess regression based RT correction
-#increase this value if the RT regression plot seems excessively sensitive to noise
-#reduce this value if RT regression fails to fit real features of the data
+#Fraction of dat used for the lowess regression based RT correction
+#Increase this value if the RT regression plot seems excessively sensitive to noise
+#Reduce this value if RT regression fails to fit real features of the data
 lowess_frac = 0.15
-#whether calculated m/z error should be in units of ppm. If false units are Da.
+#Whether calculated m/z error should be in units of ppm. If false units are Da.
 ppm = false
-#persistant model file
+#Persistant model file
 model = 'test_model'
-#if true a preexisting model and outputs will be overwritten
+#If true a preexisting model and outputs will be overwritten
 overwrite = true
-#cores = 8
-#should be one of 'train' or 'infer'
+#Should be one of 'train' or 'infer'
 mode = 'train'
-#fraction of provided data used for training
-#validation will be carried out on the remaning fraction
-#parameter ignored for inference
+#Fraction of provided data used for training
+#Validation will be carried out on the remaning fraction
+#Parameter ignored for inference
 test_split = 0.8
-#directory to save outputs. Will be created if not extant
+#Directory to save outputs. Will be created if not extant
 output = 'test'
+#Whether to make quality control plots. These will be stored in a subdirectory of output
+QC_plots = true
+#What file types to export. Must be a list, even with one value.
+#Can be any of 'png', 'jpg', 'pdf', 'svg'
+QC_plot_extensions = ['png']
 
 [cutoffs]
 mz_correction = 0.5
 rt_correction = 0.5
-#below the first element predictions are classed negative
-#above the second they're classed positive
-#in between they're classed needs_reanalysis
+#Below the first element predictions are classed negative
+#Above the second they're classed positive
+#In between they're classed needs_reanalysis
 predictor_model = [0.3,0.8]
 
 [features]
