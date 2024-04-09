@@ -3,7 +3,6 @@ name:
 channels:
   - defaults
 dependencies:
-  - dill=0.3.6
   - matplotlib=3.7.1
   - matplotlib-base=3.7.1
   - numpy=1.25.0
