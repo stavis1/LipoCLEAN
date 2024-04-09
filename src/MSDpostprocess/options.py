@@ -39,9 +39,10 @@ class options:
         logstream.setFormatter(formatter)
         self.logs.addHandler(logstream)
         
+class InputError(Exception):
+    pass
 
 def validate_inputs(args):
-    args.logs.debug(f'Started run in mode {args.mode}')
     #check that the options toml is valid
     required = ['working_directory',
                 'data',
@@ -53,22 +54,28 @@ def validate_inputs(args):
                 'overwrite',
                 'mode',
                 'test_split',
+                'output',
                 'QC_plots',
-                'output']
+                'QC_plot_extensions',
+                'log_level',
+                'cutoffs',
+                'features']
     problems = [r for r in required if not r in args.__dict__.keys()]
     if problems:
         args.logs.error('Required settings not found in options file:\n' + '\n'.join(problems))
-        raise Exception()
+        raise InputError()
+
+    args.logs.debug(f'Started run in mode {args.mode}')
 
     if args.mode == 'infer' and not os.path.exists(args.model):
         args.logs.error('Attempting inference without a pre-trained model.')
-        raise Exception()
+        raise InputError()
     
     #prevent overwriting files
     if not args.overwrite:
         if args.mode == 'train' and os.path.exists(args.model):
             args.logs.error('Overwrite is false and a model with this name already exists')
-            raise Exception()
+            raise InputError()
         problems = []
         for file in ['not_considered.tsv', 
                      'positive_lipids.tsv', 
@@ -80,7 +87,7 @@ def validate_inputs(args):
                 problems.append(path)
         if problems:
             args.logs.error('Overwrite is false and these files exist:\n' + '\n'.join(problems))
-            raise Exception()
+            raise InputError()
 
 def setup_workspace(args):
     os.chdir(args.working_directory)
@@ -89,6 +96,10 @@ def setup_workspace(args):
     else:
         args.logs.warning('Preexisting output directory found, files will be overwritten.')
     copy2(args.optfile, os.path.join(args.output, os.path.basename(args.optfile)))
+    
+    if args.mode == 'train' and not os.path.exists(args.model):
+        os.mkdir(args.model)
+    
     if args.QC_plots:
         qc_path = os.path.join(args.output, 'QC')
         if not os.path.exists(qc_path):

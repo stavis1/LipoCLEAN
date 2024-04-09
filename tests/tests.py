@@ -30,6 +30,7 @@ class baseTestSuite(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.init_dir)
         sys.argv = self.init_argv
+        os.remove('MSDpostprocess.log')
         pass
 
 class workspaceTestSuite(baseTestSuite):
@@ -40,5 +41,4 @@ class workspaceTestSuite(baseTestSuite):
     
     def tearDown(self):
         rmtree(self.args.output)
-        os.remove('MSDpostprocess.log')
         super().tearDown()
