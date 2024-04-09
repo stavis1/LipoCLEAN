@@ -11,7 +11,7 @@ sys.argv.extend('--options /home/4vt/Documents/data/SLT05_MSDpostprocess/MSDpost
 from MSDpostprocess.options import options, setup_workspace, validate_inputs
 from MSDpostprocess.utilities import read_files, filter_data, split_index, write_data
 from MSDpostprocess.models import mz_correction, rt_correction, predictor_model, add_isotope_error
-from MSDpostprocess.QC import plot_mz_QC, plot_rt_QC, plot_final_QC
+from MSDpostprocess.QC import plot_mz_QC, plot_rt_QC, plot_final_QC, plot_pairwise_scores
 
 args = options()
 validate_inputs(args)
@@ -59,3 +59,4 @@ if args.QC_plots:
     plot_mz_QC(mz_model, args)
     plot_rt_QC(rt_model, args)
     plot_final_QC(final_model, args)
+    plot_pairwise_scores(lipid_data, args)

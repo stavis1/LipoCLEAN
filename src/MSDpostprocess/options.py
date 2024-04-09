@@ -98,5 +98,8 @@ def setup_workspace(args):
         perfile_path = os.path.join(qc_path, 'per_file_plots')
         if not os.path.exists(perfile_path):
             os.mkdir(perfile_path)
+        scores_path = os.path.join(qc_path, 'scores_plots')
+        if not os.path.exists(scores_path):
+            os.mkdir(scores_path)
 
         

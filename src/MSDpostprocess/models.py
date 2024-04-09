@@ -158,6 +158,7 @@ class predictor_model(model):
 
     def classify(self, data):
         data['class'] = self.predict(data)
+        data['score'] = self._predict_prob(data)
         self.logs.info('Final classification is complete.')
         return data
     

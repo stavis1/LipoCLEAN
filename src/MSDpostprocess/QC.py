@@ -138,8 +138,6 @@ def write_metrics(calls, labels, scores, model, path):
     data.to_csv(path, mode = 'a', header = header, index = False, sep = '\t')
 
 def plot_mz_QC(mz_model, args):
-    filetypes = args.QC_plot_extensions
-    
     raw_vals = mz_model.mz_initial
     cor_vals = mz_model.mz_corrected
     #all values together
@@ -147,7 +145,7 @@ def plot_mz_QC(mz_model, args):
                         [v for vals in cor_vals.values() for v in vals], 
                         'm/z Error Correction', 
                         os.path.join(args.output, 'QC/mz_correction'), 
-                        filetypes)
+                        args.QC_plot_extensions)
     
     # per file plots
     for file in raw_vals.keys():
@@ -155,7 +153,7 @@ def plot_mz_QC(mz_model, args):
                             cor_vals[file], 
                             f'{file} m/z Error Correction', 
                             os.path.join(args.output, f'QC/per_file_plots/{file}_mz_correction'), 
-                            filetypes)
+                            args.QC_plot_extensions)
     
     #ROC plots
     if args.mode == 'train':
@@ -171,7 +169,7 @@ def plot_mz_QC(mz_model, args):
                 [mz_model.cutoff], 
                 f'm/z Correction Model {subset}', 
                 os.path.join(args.output, f'QC/mz_correction_model_{subset}'),
-                filetypes)
+                args.QC_plot_extensions)
 
     args.logs.info('Generated m/z QC plots')
 
@@ -194,8 +192,6 @@ def plot_rt_correction(observed, expected, predicted, calls, title, path, types)
     plt.close('all')
 
 def plot_rt_QC(rt_model, args):
-    filetypes = args.QC_plot_extensions
-    
     for dataset in rt_model.rt_observed.keys():
         plot_rt_correction(rt_model.rt_observed[dataset], 
                            rt_model.rt_expected[dataset], 
@@ -203,7 +199,7 @@ def plot_rt_QC(rt_model, args):
                            rt_model.rt_calls[dataset], 
                            dataset, 
                            os.path.join(args.output, f'QC/{dataset}_rt_regression'), 
-                           filetypes)
+                           args.QC_plot_extensions)
 
     #ROC plots
     if args.mode == 'train':
@@ -219,13 +215,11 @@ def plot_rt_QC(rt_model, args):
                 [rt_model.cutoff], 
                 f'RT Correction Model {subset}', 
                 os.path.join(args.output, f'QC/rt_correction_model_{subset}'),
-                filetypes)
+                args.QC_plot_extensions)
 
     args.logs.info('Generated RT QC plots')
 
-
 def plot_final_QC(final_model, args):
-    filetypes = args.QC_plot_extensions
     #ROC plots
     if args.mode == 'train':
         for subset in final_model.labels.keys():
@@ -240,6 +234,44 @@ def plot_final_QC(final_model, args):
                 final_model.cutoff, 
                 f'Final Model {subset}', 
                 os.path.join(args.output, f'QC/final_model_{subset}'),
-                filetypes)
+                args.QC_plot_extensions)
 
-    args.logs.info('Generated final QC plots')
+def scores_plot(predictor1, predictor2, data, path, types):
+    colors = get_colors(data['score'])
+    sm = get_sm(data['score'])
+    log_pred = {'Dot product':False, 
+                'S/N average':True, 
+                'isotope_error':True, 
+                'mz_error':False, 
+                'rt_error':False}
+
+    fig, ax = plt.subplots(figsize = size)
+    ax.scatter(data[predictor1], data[predictor2], 
+               s = 1, c = colors, marker = '.')
+    if log_pred[predictor1]:
+        ax.set_xscale('log')
+    if log_pred[predictor2]:
+        ax.set_yscale('log')
+    ax.set_facecolor('lightgrey')
+    ax.set_xlabel(predictor1, fontsize = fsize)
+    ax.set_ylabel(predictor2, fontsize = fsize)
+    clb = fig.colorbar(sm, ax = ax, location = 'right')
+    clb.set_label('Score', fontsize = fsize)
+    for filetype in types:
+        fig.savefig(f'{path}.{filetype}', bbox_inches = 'tight', dpi = 500)
+    plt.close('all')
+
+def plot_pairwise_scores(data, args):
+    from itertools import combinations
+    predictors = ['Dot product','S/N average','isotope_error','mz_error','rt_error']
+    for pair in combinations(predictors, 2):
+        name = f'{pair[0]}_{pair[1]}'.replace('/','-')
+        scores_plot(pair[0], 
+                    pair[1], 
+                    data, 
+                    os.path.join(args.output, f'QC/scores_plots/{name}'), 
+                    args.QC_plot_extensions)
+    
+    args.logs.info('Generated final model QC plots')
+
+
