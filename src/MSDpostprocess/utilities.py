@@ -23,7 +23,7 @@ def read_files(args):
         #find and rename m/z matrix columns
         mz_cols = list(lipid_data.columns)[list(lipid_data.columns).index('MS/MS spectrum')+1:]
         if any(lipid_data[c].dtype.kind != 'f' for c in mz_cols):
-            msg = 'Invalid data types found in m/z columns. This could be due to non m/z columns being inserted after "MS/MS spectrum". Please check'
+            msg = 'Invalid data types found in m/z columns. This could be due to non m/z columns being inserted after "MS/MS spectrum". Please check\n'
             msg += 'm/z columns:\n' + '\n'.join(mz_cols) 
             args.logs.error(msg)
             raise Exception()

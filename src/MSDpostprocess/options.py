@@ -39,9 +39,9 @@ class options:
         logstream.setFormatter(formatter)
         self.logs.addHandler(logstream)
         
-        self.logs.debug('Started run in mode {self.mode}')
 
 def validate_inputs(args):
+    args.logs.debug(f'Started run in mode {args.mode}')
     #check that the options toml is valid
     required = ['working_directory',
                 'data',
