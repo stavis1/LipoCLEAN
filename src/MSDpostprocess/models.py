@@ -54,6 +54,7 @@ class prelim_model(model):
     def predict(self, data):
         preds = self._predict_prob(data)
         preds = preds > self.cutoff
+        self.logs.debug(f'{self.model} predicted {np.sum(preds)} positive out of {len(preds)} elements')
         return preds
 
 class mz_correction(prelim_model):
@@ -85,9 +86,14 @@ class mz_correction(prelim_model):
         midmeans = np.nanmean(mz_error, axis = 0)
         mask = np.isnan(midmeans)
         if np.any(mask):
-            print('Some m/z columns had no preliminary confident values. No m/z correction will be applied to these columns:')
-            print('\n'.join(mz_cols[mask]))
+            msg = 'Some m/z columns had no preliminary confident values. '
+            msg += 'No m/z correction will be applied to these columns:\n'
+            msg += '\n'.join(mz_cols[mask])
+            self.logs.warning(msg)
             midmeans[mask] = np.zeros(midmeans.shape)[mask]
+        
+        for file, midmean in zip(mz_cols, midmeans):
+            self.logs.debug(f'{file} had an m/z correction of {midmean} Da')
         
         #calculate corrected m/z error
         mz_exp = data['Reference m/z'].to_numpy()
@@ -135,6 +141,7 @@ class rt_correction(prelim_model):
             self.rt_expected[file] = subset['Reference RT']
             self.rt_predictions[file] = regression
             self.rt_calls[file] = subset['call']
+            self.logs.debug(f'RT regression fit for {file} used {np.sum(subset["call"])} observations')
             return rt_error
         
         data['rt_error'] = data.groupby('file').apply(rt_error).T

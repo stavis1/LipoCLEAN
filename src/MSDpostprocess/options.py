@@ -38,6 +38,8 @@ class options:
         logstream.setLevel(self.log_level)
         logstream.setFormatter(formatter)
         self.logs.addHandler(logstream)
+        
+        self.logs.debug('Started run in mode {self.mode}')
 
 def validate_inputs(args):
     #check that the options toml is valid
@@ -84,11 +86,15 @@ def setup_workspace(args):
     os.chdir(args.working_directory)
     if not os.path.exists(args.output):
         os.mkdir(args.output)
+    else:
+        args.logs.warning('Preexisting output directory found, files will be overwritten.')
     copy2(args.optfile, os.path.join(args.output, os.path.basename(args.optfile)))
     if args.QC_plots:
         qc_path = os.path.join(args.output, 'QC')
         if not os.path.exists(qc_path):
             os.mkdir(qc_path)
+        else:
+            args.logs.warning('Preexisting QC path found, files will be overwritten.')
         perfile_path = os.path.join(qc_path, 'per_file_plots')
         if not os.path.exists(perfile_path):
             os.mkdir(perfile_path)
