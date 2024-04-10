@@ -133,30 +133,31 @@ class rt_correction(prelim_model):
         self.rt_expected = {}
         self.rt_observed = {}
         self.rt_calls = {}
-    
+
+    def rt_error(self, subset):
+        lowess = sm.nonparametric.lowess
+        regression = lowess(subset[subset['call']]['Reference RT'],
+                            subset[subset['call']]['Average Rt(min)'],
+                            frac = self.lowess_frac,
+                            it = 3,
+                            xvals = subset['Average Rt(min)'])
+        rt_error = subset['Reference RT'].to_numpy() - regression
+        #record regression for QC purposes
+        file = next(f for f in subset['file'])
+        self.rt_observed[file] = subset['Average Rt(min)']
+        self.rt_expected[file] = subset['Reference RT']
+        self.rt_predictions[file] = regression
+        self.rt_calls[file] = subset['call']
+        self.logs.debug(f'RT regression fit for {file} used {np.sum(subset["call"])} observations')
+        return rt_error    
+
     def correct_data(self, data):
         #identify high confidence subset for correction
         data['call'] = self.predict(data)
         
-        #build lowess regression
-        def rt_error(subset):
-            lowess = sm.nonparametric.lowess
-            regression = lowess(subset[subset['call']]['Reference RT'],
-                                subset[subset['call']]['Average Rt(min)'],
-                                frac = self.lowess_frac,
-                                it = 3,
-                                xvals = subset['Average Rt(min)'])
-            rt_error = subset['Reference RT'] - regression
-            #record regression for QC purposes
-            file = next(f for f in subset['file'])
-            self.rt_observed[file] = subset['Average Rt(min)']
-            self.rt_expected[file] = subset['Reference RT']
-            self.rt_predictions[file] = regression
-            self.rt_calls[file] = subset['call']
-            self.logs.debug(f'RT regression fit for {file} used {np.sum(subset["call"])} observations')
-            return rt_error
-        
-        data['rt_error'] = data.groupby('file').apply(rt_error).T
+        #build lowess regressions
+        rt_error = data.groupby('file').apply(self.rt_error)
+        data['rt_error'] = [val for file in rt_error for val in file]
         data = data.drop(columns = ['call'])
         
         self.logs.info('RT correction has been applied.')

@@ -174,6 +174,102 @@ class rtModelTestSuite(tests.modelTestSuite):
         self.model_class = rt_correction
         self.get_features()
 
+class rtCorrectionTestSuit(tests.hasWorkspaceTestSuite):
+    def setUp(self):
+        super().setUp()
+        self.N = 200
+        self.rng = np.random.default_rng(1)
+        
+        #subclass mz_correction to modify the predict() method
+        args = self.args
+        args.cutoffs['test_rt_corr'] = args.cutoffs['rt_correction']
+        args.features['test_rt_corr'] = args.features['rt_correction']
+        class test_rt_corr(rt_correction):
+            def predict(self, data):
+                rng = np.random.default_rng(1)
+                preds = rng.uniform(0,1,data.shape[0])
+                calls = preds > 0.1
+                return calls
+        
+        self.model = test_rt_corr(args)
+    
+    def test_correct_no_drift_no_noise(self):
+        ref = self.rng.uniform(0,10, self.N)
+        obs = ref
+        
+        data = pd.DataFrame({'call':self.model.predict(np.zeros(self.N)),
+                             'Reference RT':ref,
+                             'Average Rt(min)':obs,
+                             'file':[1]*self.N})
+        
+        rt_error = self.model.rt_error(data)
+        delta = np.mean(np.abs(rt_error))
+        self.assertAlmostEqual(delta, 0)
+
+    def test_correct_drift_no_noise(self):
+        ref = self.rng.uniform(0,10, self.N)
+        obs = ref**2
+        
+        data = pd.DataFrame({'call':self.model.predict(np.zeros(self.N)),
+                             'Reference RT':ref,
+                             'Average Rt(min)':obs,
+                             'file':[1]*self.N})
+        
+        rt_error = self.model.rt_error(data)
+        delta = np.mean(np.abs(rt_error))
+        self.assertLess(delta, 0.5)
+
+
+    def test_correct_no_drift_noise(self):
+        ref = self.rng.uniform(0,10, self.N)
+        noise = self.rng.uniform(-0.5,0.5, self.N)
+        obs = ref + noise
+        
+        data = pd.DataFrame({'call':self.model.predict(np.zeros(self.N)),
+                             'Reference RT':ref,
+                             'Average Rt(min)':obs,
+                             'file':[1]*self.N})
+        
+        rt_error = self.model.rt_error(data)
+        delta = np.mean(np.abs(rt_error - noise))
+        self.assertLess(delta, 0.5)
+
+    def test_correct_drift_noise(self):
+        ref = self.rng.uniform(0,10, self.N)
+        noise = self.rng.uniform(-0.5,0.5, self.N)
+        obs = ref**2 + noise
+        
+        data = pd.DataFrame({'call':self.model.predict(np.zeros(self.N)),
+                             'Reference RT':ref,
+                             'Average Rt(min)':obs,
+                             'file':[1]*self.N})
+        
+        rt_error = self.model.rt_error(data)
+        delta = np.mean(np.abs(rt_error - noise))
+        self.assertLess(delta, 0.5)
+
+
+    def test_correct_drift_noise_multiple_files(self):
+        noises = []
+        data = []
+        for i in range(5):
+            ref = self.rng.uniform(0,10, self.N)
+            noise = self.rng.uniform(-0.5,0.5, self.N)
+            obs = ref**2 + noise
+            noises.extend(noise)
+            
+            tmp = pd.DataFrame({'call':self.model.predict(np.zeros(self.N)),
+                                'Reference RT':ref,
+                                'Average Rt(min)':obs,
+                                'file':[i]*self.N})
+            data.append(tmp)
+        
+        data = pd.concat(data)
+        data = self.model.correct_data(data)
+        delta = np.mean(np.abs(data['rt_error'].to_numpy() - np.array(noises)))
+
+        self.assertLess(delta, 0.5)
+        
 
 class finalModelTestSuite(tests.modelTestSuite):
     def __init__(self, *args, **kwargs):
