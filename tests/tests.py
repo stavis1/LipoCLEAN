@@ -10,6 +10,11 @@ from shutil import rmtree
 import os
 import unittest
 import logging
+import re
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import roc_auc_score
 
 from MSDpostprocess.options import options, setup_workspace
 from MSDpostprocess.utilities import read_files
@@ -42,3 +47,68 @@ class hasWorkspaceTestSuite(baseTestSuite):
     def tearDown(self):
         rmtree(self.args.output)
         super().tearDown()
+
+class modelTestSuite(hasWorkspaceTestSuite):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def setUp(self):
+        super().setUp()
+        self.model = self.model_class(self.args)
+    
+    def get_features(self):
+        init_argv = sys.argv
+        test_path = os.path.dirname(__name__)
+        sys.argv = [sys.argv[0], '--options', os.path.join(test_path, 'options.toml')]
+        args = options()
+        sys.argv = init_argv
+        classname = str(self.model_class(args).__class__)
+        self.model_name = re.search(r"\.([^.]+)'>\Z", classname).group(1)
+        self.features = args.features[self.model_name]
+    
+    def make_fake_data(self, m1, m2, rng):
+        N = 100
+        pos = rng.normal(m1, 1, (N, len(self.features)))
+        neg = rng.normal(m2, 1, (N, len(self.features)))
+        labels = np.array([1]*N + [0]*N)
+        idx = rng.choice(range(N*2), size = N*2, replace = False)
+        features = np.concatenate((pos,neg))
+        features = features[idx]
+        labels = labels[idx]
+        data = pd.DataFrame(features, columns = self.features)
+        data['label'] = labels
+        return data
+    
+    def fit_on_data(self, m1, m2):
+        rng = np.random.default_rng(1)
+
+        data = self.make_fake_data(m1, m2, rng)
+        self.model.fit(data)
+        
+        data = self.make_fake_data(m1, m2, rng)
+        scores = self.model._predict_prob(data)
+        aucroc = roc_auc_score(data['label'], scores)
+        
+        calls = self.model.predict(data)
+        n_incorrect = np.sum(calls != data['label'].to_numpy())
+        
+        return (aucroc, n_incorrect)
+    
+    def test_fit_on_separable_data(self):
+        aucroc, n_incorrect = self.fit_on_data(0, 4)
+        
+        with self.subTest():
+            self.assertAlmostEqual(aucroc, 1, delta = 0.02)
+        
+        with self.subTest():
+            self.assertTrue(n_incorrect < 10)
+
+    def test_fit_on_inseparable_data(self):
+        aucroc, n_incorrect = self.fit_on_data(0, 0)
+        
+        with self.subTest():
+            self.assertAlmostEqual(aucroc, 0.5, delta = 0.1)
+        
+        with self.subTest():
+            self.assertTrue(n_incorrect > 80)
+    

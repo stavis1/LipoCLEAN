@@ -62,23 +62,14 @@ class mz_correction(prelim_model):
         super().__init__(args)
         self.ppm = args.ppm
         self.save_data = args.QC_plots
-
-    def correct_data(self, data):
-        #identify high confidence subset for correction
-        calls = self.predict(data)
-        subset = data[calls]
-        
-        #calculate observed m/z error
+    
+    def calc_error(self, subset):
         mz_cols = np.array([c for c in subset.columns if c.startswith('observed_mz_')])
         mz_exp = subset['Reference m/z'].to_numpy()
         mz_error = subset[mz_cols].to_numpy() - mz_exp[:,np.newaxis]
-        
-        #save initial m/z values for QC plotting
-        if self.save_data:
-            all_error = data[mz_cols].to_numpy() - data['Reference m/z'].to_numpy()[:,np.newaxis]
-            self.mz_initial = {c:all_error[np.isfinite(data[c]),i] for i,c in enumerate(mz_cols)}
-        
-        #calculate per-file midmeans of m/z error
+        return (mz_cols, mz_error)
+    
+    def calc_midmeans(self, mz_error, mz_cols):
         quartiles = np.nanquantile(mz_error, (0.25,0.75), axis = 0)
         mask = np.logical_or(mz_error < quartiles[0,:][np.newaxis,:],
                              mz_error > quartiles[1,:][np.newaxis,:])
@@ -94,11 +85,32 @@ class mz_correction(prelim_model):
         
         for file, midmean in zip(mz_cols, midmeans):
             self.logs.debug(f'{file} had an m/z correction of {midmean} Da')
-        
-        #calculate corrected m/z error
+        return midmeans
+    
+    def correct_error(self, data, mz_cols, midmeans):
         mz_exp = data['Reference m/z'].to_numpy()
         corr_mz = data[mz_cols].to_numpy() - midmeans[np.newaxis,:]
         mz_error = corr_mz - mz_exp[:,np.newaxis]
+        return mz_error
+
+    def correct_data(self, data):
+        #identify high confidence subset for correction
+        calls = self.predict(data)
+        subset = data[calls]
+        
+        #calculate observed m/z error
+        mz_cols, mz_error = self.calc_error(subset)
+        
+        #save initial m/z values for QC plotting
+        if self.save_data:
+            all_error = data[mz_cols].to_numpy() - data['Reference m/z'].to_numpy()[:,np.newaxis]
+            self.mz_initial = {c:all_error[np.isfinite(data[c]),i] for i,c in enumerate(mz_cols)}
+        
+        #calculate per-file midmeans of m/z error
+        midmeans = self.calc_midmeans(mz_error, mz_cols)
+        
+        #calculate corrected m/z error
+        mz_error = self.correct_error(data, mz_cols, midmeans)
 
         #save corrected m/z values for QC plotting
         if self.save_data:
