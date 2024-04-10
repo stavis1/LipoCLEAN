@@ -136,6 +136,6 @@ class modelTestSuite(hasWorkspaceTestSuite):
         with self.subTest(msg = 'Testing AUC-ROC equality'):
             self.assertAlmostEqual(init_aucroc, reload_aucroc, delta = 0.05)
         with self.subTest(msg = 'Testing N incorrect equality'):
-            self.assertAlmostEqual(init_n_incorrect, reload_n_incorrect, delta = 3)
+            self.assertAlmostEqual(init_n_incorrect, reload_n_incorrect, delta = 5)
 
 

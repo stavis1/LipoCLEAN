@@ -12,8 +12,10 @@ import re
 
 import numpy as np
 import pandas as pd
+from scipy.stats import binom
 
-from MSDpostprocess.models import mz_correction, rt_correction, predictor_model, isotope_error, add_isotope_error
+from MSDpostprocess.models import mz_correction, rt_correction, predictor_model
+from MSDpostprocess.models import isotope_error, add_isotope_error, expected_isopacket
 from MSDpostprocess.options import options
 import tests
 
@@ -277,6 +279,73 @@ class finalModelTestSuite(tests.modelTestSuite):
         self.model_class = predictor_model
         self.get_features()
 
+class isotopeFitTestSuite(tests.baseTestSuite):
+    def test_expected_isopacket(self):
+        exp = binom.pmf(range(5), n = 10, p = 0.00015)
+        for i in range(2,6):
+            isopacket = expected_isopacket('H10', i)
+            with self.subTest(msg = f'Hydrogen dist with {i} peaks'):
+                delta = np.sum(np.abs(isopacket - exp[:len(isopacket)]))
+                self.assertAlmostEqual(delta, 0, delta = 0.001)
+
+    def calc_isotope_packet(self, formula):
+        formula = {e[0]:int(e[1]) for e in re.findall(r'([A-Z])(\d+)', formula)}
+        probs = {'H':1.00627699,
+                 'C':1.00334999,
+                 'N':0.99704}
+        calc = None
+        for atom, number in formula.items():
+            packet = binom.pmf(range(5), n = number, p = probs[atom]/100)
+            if calc is None:
+                calc = packet
+            else:
+                calc = np.convolve(calc, packet)
+            assert not np.any(np.isnan(calc))
+        return calc
+
+    def test_zero_isotope_error(self):
+        formula = 'C8H10'
+        calc = self.calc_isotope_packet(formula)
+        
+        exp = expected_isopacket(formula, 3)
+        error = isotope_error(exp, ' '.join(f'1234:{c}' for c in calc[:len(exp)]))
+        
+        self.assertAlmostEqual(error, 0, delta = 0.01) 
+    
+    def test_large_isotope_error(self):
+        obs = [1,2,3]
+        exp = expected_isopacket('C8H10', 3)
+        error = isotope_error(exp, ' '.join(f'1234:{c}' for c in obs))
+        
+        self.assertGreater(error, 0.1)        
+    
+    def test_add_zero_isotope_error(self):
+        rng = np.random.default_rng(1)
+        n = rng.integers(1,10,(20,3))
+        formulae = [f'C{n[i,0]}H{n[i,1]}N{n[i,2]}' for i in range(n.shape[0])]
+        observed = [self.calc_isotope_packet(f)[:3] for f in formulae]
+        observed = [' '.join(f'1234:{p}' for p in peaks) for peaks in observed]
+        
+        data = pd.DataFrame({'Formula': formulae,
+                             'MS1 isotopic spectrum':observed})
+        
+        data = add_isotope_error(data)
+        error = np.mean(data['isotope_error'])
+        self.assertLess(error, 0.01)
+    
+    def test_add_large_isotope_error(self):
+        rng = np.random.default_rng(1)
+        n = rng.integers(1,10,(20,3))
+        formulae = [f'C{n[i,0]}H{n[i,1]}N{n[i,2]}' for i in range(n.shape[0])]
+        observed = n
+        observed = [' '.join(f'1234:{p}' for p in peaks) for peaks in observed]
+        
+        data = pd.DataFrame({'Formula': formulae,
+                             'MS1 isotopic spectrum':observed})
+        
+        data = add_isotope_error(data)
+        error = np.mean(data['isotope_error'])
+        self.assertGreater(error, 0.1)
 
 if __name__ == "__main__":
     unittest.main()
