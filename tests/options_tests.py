@@ -11,7 +11,7 @@ import unittest
 from shutil import rmtree
 
 from MSDpostprocess.options import validate_inputs, setup_workspace, InputError
-from tests import baseTestSuite
+from tests import baseTestSuite, hasWorkspaceTestSuite
 
 class validateTestSuite(baseTestSuite):
     def test_error_on_missing_inputs(self):
@@ -65,6 +65,12 @@ class validateTestSuite(baseTestSuite):
             rmtree(self.args.output)
             rmtree(self.args.model)
 
+class workspaceTestSuite(hasWorkspaceTestSuite):
+    def test_workspace_has_dirs(self):
+        out = self.args.output
+        for folder in [os.path.join(out, d) for d in ['', 'QC', 'QC/per_file_plots', 'QC/scores_plots']]:
+            with self.subTest():
+                self.assertTrue(os.path.exists(folder))
 
 if __name__ == "__main__":
     unittest.main()

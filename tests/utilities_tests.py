@@ -11,7 +11,7 @@ import unittest
 import pandas as pd
 
 from MSDpostprocess.utilities import filter_data, read_files, split_index, write_data
-from tests import baseTestSuite, workspaceTestSuite
+from tests import baseTestSuite, hasWorkspaceTestSuite
 
 class readTestSuite(baseTestSuite):    
     def test_read_data(self):
@@ -23,12 +23,12 @@ class readTestSuite(baseTestSuite):
         data = read_files(self.args)
         self.assertEqual(data.shape, (15, 370))
 
-class filterTestSuite(workspaceTestSuite):   
+class filterTestSuite(hasWorkspaceTestSuite):   
     def test_filter(self):
         filtered = filter_data(self.lipid_data.copy(), self.args)
         self.assertEqual(filtered.shape, (543,146))
 
-class splitTestSuite(workspaceTestSuite):
+class splitTestSuite(hasWorkspaceTestSuite):
     def setUp(self):
         super().setUp()
         self.lipid_data = filter_data(self.lipid_data, self.args)
@@ -40,7 +40,7 @@ class splitTestSuite(workspaceTestSuite):
         with self.subTest():
             self.assertEqual(len(set(train_idx).intersection(test_idx)), 0)
 
-class writeTestSuite(workspaceTestSuite):
+class writeTestSuite(hasWorkspaceTestSuite):
     def test_write_data(self):
         classes = [0]*100 + [1]*100 + [-1]*398
         self.lipid_data['class'] = classes

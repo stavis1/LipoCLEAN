@@ -33,7 +33,7 @@ class baseTestSuite(unittest.TestCase):
         os.remove('MSDpostprocess.log')
         pass
 
-class workspaceTestSuite(baseTestSuite):
+class hasWorkspaceTestSuite(baseTestSuite):
     def setUp(self):
         super().setUp()
         self.lipid_data = read_files(self.args)
