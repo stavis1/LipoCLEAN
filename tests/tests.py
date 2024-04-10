@@ -46,6 +46,7 @@ class hasWorkspaceTestSuite(baseTestSuite):
     
     def tearDown(self):
         rmtree(self.args.output)
+        rmtree(self.args.model)
         super().tearDown()
 
 class modelTestSuite(hasWorkspaceTestSuite):
@@ -97,18 +98,44 @@ class modelTestSuite(hasWorkspaceTestSuite):
     def test_fit_on_separable_data(self):
         aucroc, n_incorrect = self.fit_on_data(0, 4)
         
-        with self.subTest():
+        with self.subTest(msg = 'Testing AUC-ROC is good'):
             self.assertAlmostEqual(aucroc, 1, delta = 0.02)
         
-        with self.subTest():
+        with self.subTest(msg = 'Testing N incorrect is good'):
             self.assertTrue(n_incorrect < 10)
 
     def test_fit_on_inseparable_data(self):
         aucroc, n_incorrect = self.fit_on_data(0, 0)
         
-        with self.subTest():
+        with self.subTest(msg = 'Testing AUC-ROC ~ 0.5'):
             self.assertAlmostEqual(aucroc, 0.5, delta = 0.1)
         
-        with self.subTest():
+        with self.subTest(msg = 'Testing that N incorrect is high'):
             self.assertTrue(n_incorrect > 80)
     
+    def test_save_model(self):
+        rng = np.random.default_rng(1)
+        with self.subTest(msg = 'Testing the absence of a preexisting model'):
+            files = os.listdir(self.args.model)
+            self.assertEqual(files, [])
+        
+        init_aucroc, init_n_incorrect = self.fit_on_data(0, 4)
+        
+        self.model.dump()        
+        self.model = None
+        self.model = self.model_class(self.args)
+        self.model.load()
+        
+        data = self.make_fake_data(0, 4, rng)
+        scores = self.model._predict_prob(data)
+        reload_aucroc = roc_auc_score(data['label'], scores)
+        
+        calls = self.model.predict(data)
+        reload_n_incorrect = np.sum(calls != data['label'].to_numpy())
+        
+        with self.subTest(msg = 'Testing AUC-ROC equality'):
+            self.assertAlmostEqual(init_aucroc, reload_aucroc, delta = 0.05)
+        with self.subTest(msg = 'Testing N incorrect equality'):
+            self.assertAlmostEqual(init_n_incorrect, reload_n_incorrect, delta = 3)
+
+

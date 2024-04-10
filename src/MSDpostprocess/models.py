@@ -27,11 +27,11 @@ class model():
     
     def load(self):
         with shelve.open(self.db) as db:
-            db[self.model] = self
+            self.classifier = db[self.model]
 
     def dump(self):
         with shelve.open(self.db) as db:
-            db[self.model] = self    
+            db[self.model] = self.classifier
     
     def _predict_prob(self, data):
         probs = self.classifier.predict_proba(data[self.features])
