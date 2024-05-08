@@ -35,6 +35,8 @@ def read_files(args):
         dfs.append(lipid_data)
         args.logs.debug(f'{file} read with shape {lipid_data.shape}')
     lipid_data = pd.concat(dfs, ignore_index = True)
+    if args.mode == 'train':
+        lipid_data['label'] = pd.to_numeric(lipid_data['label'])
     return lipid_data
 
 def filter_data(lipid_data, args):

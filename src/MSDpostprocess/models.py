@@ -40,6 +40,8 @@ class model():
         return probs
     
     def fit(self, data):
+        data = data.copy()
+        data = data[np.isfinite(data['label'])]
         self.classifier = GBC(n_estimators = 40)
         self.classifier.fit(data[self.features], 
                             data['label'])
@@ -84,7 +86,7 @@ class mz_correction(prelim_model):
             midmeans[mask] = np.zeros(midmeans.shape)[mask]
         
         for file, midmean in zip(mz_cols, midmeans):
-            self.logs.debug(f'{file} had an m/z correction of {midmean} Da')
+            self.logs.debug(f'{file} had an m/z correction of {midmean} m/z')
         return midmeans
     
     def correct_error(self, data, mz_cols, midmeans):
