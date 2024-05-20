@@ -164,3 +164,4 @@ example_data/*
 !example_data/example_output_positive.txt
 !example_data/options.toml
 !example_data/training_data.tsv
+tests/test_model/*
