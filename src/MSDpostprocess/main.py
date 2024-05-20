@@ -6,7 +6,6 @@ Created on Wed Apr  3 10:14:41 2024
 @author: 4vt
 """
 import sys
-sys.argv.extend('--options /home/4vt/Documents/data/SLT05_MSDpostprocess/MSDpostprocess/example_data/options.toml'.split())
 
 from MSDpostprocess.options import options, setup_workspace, validate_inputs
 from MSDpostprocess.utilities import read_files, filter_data, split_index, write_data
@@ -27,6 +26,7 @@ final_model = predictor_model(args)
 
 if args.mode == 'train':
     train_idx, test_idx = split_index(lipid_data, args)
+    lipid_data['split'] = ['train' if i in train_idx else 'test' for i in lipid_data.index]
     
     mz_model.fit(lipid_data.loc[train_idx])
     mz_model.dump()

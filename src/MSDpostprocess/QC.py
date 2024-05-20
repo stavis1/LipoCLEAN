@@ -60,7 +60,8 @@ def FDR(tn,fp,fn,tp):
 def ROC(scores, labels, cutoffs, title, path, types):
     from sklearn.metrics import confusion_matrix
     from sklearn.metrics import roc_auc_score
-    
+    scores = scores[np.isfinite(labels)]
+    labels = labels[np.isfinite(labels)]
     #calculate ROC curve
     tprs = [0]
     fprs = [0]
@@ -122,7 +123,9 @@ def mz_error_histograms(raw, corrected, title, path, types):
 def write_metrics(calls, labels, scores, model, path):
     from sklearn.metrics import confusion_matrix
     from sklearn.metrics import roc_auc_score
-    calls = [c if c > 0 else 0 for c in calls]
+    calls = np.array([c if c > 0 else 0 for c in calls])[np.isfinite(labels)]
+    scores = scores[np.isfinite(labels)]
+    labels = labels[np.isfinite(labels)]
     tn,fp,fn,tp = confusion_matrix(labels, calls).flatten()
     data = pd.DataFrame({'Model':model,
                          'FDR':FDR(tn, fp, fn, tp),

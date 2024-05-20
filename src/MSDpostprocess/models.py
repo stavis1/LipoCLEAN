@@ -31,11 +31,11 @@ class model():
         self.logs = args.logs
     
     def load(self):
-        with open(f'{self.db}{self.model}', 'rb') as dillfile:
+        with open(f'{self.db}/{self.model}', 'rb') as dillfile:
             self.classifier = dill.load(dillfile)
 
     def dump(self):
-        with open(f'{self.db}{self.model}', 'wb') as dillfile:
+        with open(f'{self.db}/{self.model}', 'wb') as dillfile:
             dill.dump(self.classifier,dillfile)
             
     def assess(self, data, tag):
@@ -228,7 +228,7 @@ class predictor_model(model):
         
     def predict(self, preds):
         classes = [0 if p < self.cutoff[0] else 1 if p > self.cutoff[1] else -1 for p in preds]
-        self.logs.debug(f'{self.model} predicted {np.sum(preds)} positive out of {len(preds)} elements')
+        self.logs.debug(f'{self.model} predicted {np.sum(preds > self.cutoff[1])} positive out of {len(preds)} elements')
         return classes
 
     def classify(self, data):
@@ -238,12 +238,12 @@ class predictor_model(model):
         return data
 
     def load(self):
-        with open(f'{self.db}{self.model}', 'rb') as dillfile:
+        with open(f'{self.db}/{self.model}', 'rb') as dillfile:
             self.classifier, self.preprocessor, self.trace, self.X = dill.load(dillfile)
 
     def dump(self):
         tosave = (self.classifier, self.preprocessor, self.trace, self.X)
-        with open(f'{self.db}{self.model}', 'wb') as dillfile:
+        with open(f'{self.db}/{self.model}', 'wb') as dillfile:
             dill.dump(tosave,dillfile)
 
 @cache

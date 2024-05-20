@@ -66,14 +66,15 @@ def validate_inputs(args):
         raise InputError()
 
     args.logs.debug(f'Started run in mode {args.mode}')
-
-    if args.mode == 'infer' and not os.path.exists(args.model):
-        args.logs.error('Attempting inference without a pre-trained model.')
+    
+    model = os.path.join(args.working_directory, args.model)
+    if args.mode == 'infer' and not os.path.exists(model):
+        args.logs.error(f'Attempting inference without a pre-trained model, expected {os.path.abspath(model)}.')
         raise InputError()
     
     #prevent overwriting files
     if not args.overwrite:
-        if args.mode == 'train' and os.path.exists(args.model):
+        if args.mode == 'train' and os.path.exists(model):
             args.logs.error('Overwrite is false and a model with this name already exists')
             raise InputError()
         problems = []
@@ -95,8 +96,11 @@ def setup_workspace(args):
         os.mkdir(args.output)
     else:
         args.logs.warning('Preexisting output directory found, files will be overwritten.')
-    copy2(args.optfile, os.path.join(args.output, os.path.basename(args.optfile)))
+    target_optfile = os.path.join(args.output, os.path.basename(args.optfile))
+    if os.path.abspath(target_optfile) != args.optfile:
+        copy2(args.optfile, target_optfile)
     
+    args.model = os.path.abspath(args.model)
     if args.mode == 'train' and not os.path.exists(args.model):
         os.mkdir(args.model)
     
