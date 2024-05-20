@@ -51,7 +51,12 @@ class mzCorrectionTestSuite(tests.hasWorkspaceTestSuite):
         args.cutoffs['test_mz_corr'] = args.cutoffs['mz_correction']
         args.features['test_mz_corr'] = args.features['mz_correction']
         args.ppm = True
+        #we want to test the m/z correction code without fitting a preliminary model so
+        #this object just chooses random elements as preliminary high confidence entries
         class test_mz_corr(mz_correction):
+            def _predict_prob(self, data):
+                return data
+            
             def predict(self, data):
                 return calls
         
@@ -187,6 +192,9 @@ class rtCorrectionTestSuit(tests.hasWorkspaceTestSuite):
         args.cutoffs['test_rt_corr'] = args.cutoffs['rt_correction']
         args.features['test_rt_corr'] = args.features['rt_correction']
         class test_rt_corr(rt_correction):
+            def _predict_prob(self, data):
+                return data
+            
             def predict(self, data):
                 rng = np.random.default_rng(1)
                 preds = rng.uniform(0,1,data.shape[0])

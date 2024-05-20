@@ -78,6 +78,7 @@ class modelTestSuite(hasWorkspaceTestSuite):
         labels = labels[idx]
         data = pd.DataFrame(features, columns = self.features)
         data['label'] = labels
+        data['isotope_error'] = np.exp(data['isotope_error'])
         return data
     
     def fit_on_data(self, m1, m2):
@@ -90,7 +91,7 @@ class modelTestSuite(hasWorkspaceTestSuite):
         scores = self.model._predict_prob(data)
         aucroc = roc_auc_score(data['label'], scores)
         
-        calls = self.model.predict(data)
+        calls = self.model.predict(scores)
         n_incorrect = np.sum(calls != data['label'].to_numpy())
         
         return (aucroc, n_incorrect)
@@ -130,7 +131,7 @@ class modelTestSuite(hasWorkspaceTestSuite):
         scores = self.model._predict_prob(data)
         reload_aucroc = roc_auc_score(data['label'], scores)
         
-        calls = self.model.predict(data)
+        calls = self.model.predict(scores)
         reload_n_incorrect = np.sum(calls != data['label'].to_numpy())
         
         with self.subTest(msg = 'Testing AUC-ROC equality'):
