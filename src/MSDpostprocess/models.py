@@ -12,13 +12,13 @@ from functools import cache
 import dill
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import GradientBoostingClassifier as GBC
 from brainpy import isotopic_variants
 import statsmodels.api as sm
 from sklearn.preprocessing import StandardScaler
-import pymc as pm
-import pymc_bart as pmb
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
+from lineartree import LinearForestClassifier
+from sklearn.pipeline import Pipeline
+
 
 class model():
     def __init__(self, args):
@@ -38,7 +38,9 @@ class model():
     def dump(self):
         with open(f'{self.db}/{self.model}', 'wb') as dillfile:
             dill.dump(self.classifier,dillfile)
-            
+        
+
+    
     def assess(self, data, tag):
         self.probs[tag] = self._predict_prob(data)
         self.calls[tag] = self.predict(self.probs[tag])
@@ -55,14 +57,14 @@ class prelim_model(model):
         self.classifier = LogisticRegression(solver = 'liblinear')
         self.classifier.fit(data[self.features], data['label'])
         self.logs.info(f'Fit {self.model}')
-    
+
     def _predict_prob(self, data):
         data = self.preprocess(data.copy())
         probs = self.classifier.predict_proba(data[self.features])
         idx = list(self.classifier.classes_).index(1)
         probs = probs[:,idx]
         return probs
-    
+
     def predict(self, preds):
         preds = preds > self.cutoff
         self.logs.debug(f'{self.model} predicted {np.sum(preds)} positive out of {len(preds)} elements')
@@ -190,24 +192,6 @@ class rt_correction(prelim_model):
         return data
 
 class predictor_model(model):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.nTrees = 50
-        self.α = 0.8
-        self.β = 4
-        # self.probs = None
-    
-    def make_classifier(self, data):
-        y = data['label'] if 'label' in data.columns else [] #[1]*data.shape[0]
-        classifier = pm.Model()
-        X = data[[c for c in data.columns if c != 'label']]
-        with classifier:
-            # X = pm.MutableData("X", data)
-            μ = pmb.BART("μ", X=X, Y=y, m=self.nTrees, alpha = self.α, beta = self.β)
-            p = pm.invlogit(μ)
-            ŷ = pm.Bernoulli('ŷ', p = p, observed = y, shape = μ.shape)
-        return classifier
-    
     def fit_preprocessor(self, data):
         self.preprocessor = StandardScaler()
         self.preprocessor.fit(data[self.features])
@@ -220,35 +204,22 @@ class predictor_model(model):
 
     def fit(self, data):
         data = data.copy()
-        data = data[np.isfinite(data['label'])]
-        self.fit_preprocessor(data)
-        train_data = self.preprocess(data)
+        data = data[np.isfinite(data['label'])]       
+        LFclassifier = LinearForestClassifier(base_estimator=LinearRegression(),
+                                              n_estimators = 10,
+                                              max_depth = 10,
+                                              max_features = 5)
         
-        # self.classifier = pm.Model()
-        # with self.classifier:
-        #     self.X = pm.MutableData("X", train_data)
-        #     y = data['label']
-        #     μ = pmb.BART("μ", X=self.X, Y=y, m=self.nTrees, alpha = self.α, beta = self.β)
-        #     p = pm.invlogit(μ)
-        #     ŷ = pm.Bernoulli('ŷ', p = p, observed = y, shape = μ.shape)
-        classifier = self.make_classifier(train_data)
-        with classifier:
-            self.trace = pm.sample(draws = 2000)
-
+        self.classifier = Pipeline([('scalar', StandardScaler()),
+                                    ('classifier', LFclassifier)])
+        self.classifier.fit(data[self.features], data['label'])
+    
     def _predict_prob(self, data):
-        proc_data = self.preprocess(data)
-
-        classifier = self.make_classifier(proc_data)        
-        with classifier:
-            # self.X.set_value(proc_data)
-            results = pm.sample_posterior_predictive(trace = self.trace)
-        
-        posterior = results.to_dataframe()
-        prediction_map = {c[1]:np.mean(posterior[c]) for c in posterior.columns if c[0].startswith('ŷ')}
-        probs = np.array([prediction_map[i] for i in range(data.shape[0])])
-        # self.probs = probs
+        probs = self.classifier.predict_proba(data[self.features])
+        idx = list(self.classifier.classes_).index(1)
+        probs = probs[:,idx]
         return probs
-        
+    
     def predict(self, preds):
         classes = [0 if p < self.cutoff[0] else 1 if p > self.cutoff[1] else -1 for p in preds]
         self.logs.debug(f'{self.model} predicted {np.sum(preds > self.cutoff[1])} positive out of {len(preds)} elements')
@@ -260,14 +231,6 @@ class predictor_model(model):
         self.logs.info('Final classification is complete.')
         return data
 
-    def load(self):
-        with open(f'{self.db}/{self.model}', 'rb') as dillfile:
-            self.preprocessor, self.trace = dill.load(dillfile)
-
-    def dump(self):
-        tosave = (self.preprocessor, self.trace)
-        with open(f'{self.db}/{self.model}', 'wb') as dillfile:
-            dill.dump(tosave,dillfile)
 
 @cache
 def expected_isopacket(formula, npeaks):
