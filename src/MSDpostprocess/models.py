@@ -14,11 +14,11 @@ import numpy as np
 import pandas as pd
 from brainpy import isotopic_variants
 import statsmodels.api as sm
+from lineartree import LinearForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression, LinearRegression
-from lineartree import LinearForestClassifier
 from sklearn.pipeline import Pipeline
-
+from sklearn.calibration import CalibratedClassifierCV
 
 class model():
     def __init__(self, args):
@@ -206,9 +206,11 @@ class predictor_model(model):
         data = data.copy()
         data = data[np.isfinite(data['label'])]       
         LFclassifier = LinearForestClassifier(base_estimator=LinearRegression(),
-                                              n_estimators = 10,
-                                              max_depth = 10,
+                                              n_estimators = 50,
+                                              max_depth = None,
                                               max_features = 5)
+        
+        LFclassifier = CalibratedClassifierCV(LFclassifier, ensemble = False)
         
         self.classifier = Pipeline([('scalar', StandardScaler()),
                                     ('classifier', LFclassifier)])
@@ -230,7 +232,6 @@ class predictor_model(model):
         data['class'] = self.predict(data['score'])
         self.logs.info('Final classification is complete.')
         return data
-
 
 @cache
 def expected_isopacket(formula, npeaks):
