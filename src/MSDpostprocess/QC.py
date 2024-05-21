@@ -120,6 +120,25 @@ def mz_error_histograms(raw, corrected, title, path, types):
         fig.savefig(f'{path}.{filetype}', bbox_inches = 'tight', dpi = 500)
     plt.close('all')
 
+def TF_histogram(scores, labels, cutoffs, title, path, types):
+    scores = scores[np.isfinite(labels)]
+    labels = labels[np.isfinite(labels)]
+    bins = np.linspace(min(scores), max(scores), 50)
+    fig, ax = plt.subplots()
+    ax.hist(scores[labels == 1], bins = bins, color = 'k', alpha = 0.5, label = 'True')    
+    ax.hist(scores[labels == 0], bins = bins, color = 'r', alpha = 0.5, label = 'False')    
+    ylim = ax.get_ylim()
+    for cutoff in (cutoffs if hasattr(cutoffs, '__iter__') else [cutoffs]):
+        ax.plot([cutoff]*2, ylim, '-k', linewidth = 1)
+    ax.set_ylim(ylim)
+    ax.set_xlabel('Model Score')
+    ax.set_ylabel('Number of Observations')
+    ax.set_title(title)
+    ax.legend()
+    for filetype in types:
+        fig.savefig(f'{path}.{filetype}', bbox_inches = 'tight', dpi = 500)
+    plt.close('all')
+
 def write_metrics(calls, labels, scores, model, path):
     from sklearn.metrics import confusion_matrix
     from sklearn.metrics import roc_auc_score
@@ -174,6 +193,13 @@ def plot_mz_QC(mz_model, args):
                 os.path.join(args.output, f'QC/mz_correction_model_{subset}'),
                 args.QC_plot_extensions)
 
+            TF_histogram(mz_model.probs[subset], 
+                mz_model.labels[subset], 
+                mz_model.cutoff, 
+                f'Final Model {subset}', 
+                os.path.join(args.output, f'QC/final_model_{subset}_histogram'),
+                args.QC_plot_extensions)
+
     args.logs.info('Generated m/z QC plots')
 
 def plot_rt_correction(observed, expected, predicted, calls, title, path, types):
@@ -220,6 +246,13 @@ def plot_rt_QC(rt_model, args):
                 os.path.join(args.output, f'QC/rt_correction_model_{subset}'),
                 args.QC_plot_extensions)
 
+            TF_histogram(rt_model.probs[subset], 
+                rt_model.labels[subset], 
+                rt_model.cutoff, 
+                f'Final Model {subset}', 
+                os.path.join(args.output, f'QC/final_model_{subset}_histogram'),
+                args.QC_plot_extensions)
+
     args.logs.info('Generated RT QC plots')
 
 def plot_final_QC(final_model, args):
@@ -236,7 +269,14 @@ def plot_final_QC(final_model, args):
                 final_model.labels[subset], 
                 final_model.cutoff, 
                 f'Final Model {subset}', 
-                os.path.join(args.output, f'QC/final_model_{subset}'),
+                os.path.join(args.output, f'QC/final_model_{subset}_ROC'),
+                args.QC_plot_extensions)
+            
+            TF_histogram(final_model.probs[subset], 
+                final_model.labels[subset], 
+                final_model.cutoff, 
+                f'Final Model {subset}', 
+                os.path.join(args.output, f'QC/final_model_{subset}_histogram'),
                 args.QC_plot_extensions)
 
 def scores_plot(predictor1, predictor2, data, path, types):
