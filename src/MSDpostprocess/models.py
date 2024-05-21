@@ -11,6 +11,7 @@ from functools import cache
 
 import dill
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier as GBC
 from brainpy import isotopic_variants
 import statsmodels.api as sm
@@ -195,29 +196,51 @@ class predictor_model(model):
         self.α = 0.8
         self.β = 4
         # self.probs = None
+    
+    def make_classifier(self, data):
+        y = data['label'] if 'label' in data.columns else [] #[1]*data.shape[0]
+        classifier = pm.Model()
+        X = data[[c for c in data.columns if c != 'label']]
+        with classifier:
+            # X = pm.MutableData("X", data)
+            μ = pmb.BART("μ", X=X, Y=y, m=self.nTrees, alpha = self.α, beta = self.β)
+            p = pm.invlogit(μ)
+            ŷ = pm.Bernoulli('ŷ', p = p, observed = y, shape = μ.shape)
+        return classifier
+    
+    def fit_preprocessor(self, data):
+        self.preprocessor = StandardScaler()
+        self.preprocessor.fit(data[self.features])
+
+    def preprocess(self, data):
+        processed = pd.DataFrame(self.preprocessor.transform(data[self.features]))
+        if 'label' in data.columns:
+            processed['label'] = data['label']
+        return processed
 
     def fit(self, data):
         data = data.copy()
         data = data[np.isfinite(data['label'])]
-        self.preprocessor = StandardScaler()
-        self.classifier = pm.Model()
+        self.fit_preprocessor(data)
+        train_data = self.preprocess(data)
         
-        self.preprocessor.fit(data[self.features])
-        train_data = self.preprocessor.transform(data[self.features])
-        
-        with self.classifier:
-            self.X = pm.MutableData("X", train_data)
-            y = data['label']
-            μ = pmb.BART("μ", X=self.X, Y=y, m=self.nTrees, alpha = self.α, beta = self.β)
-            p = pm.invlogit(μ)
-            ŷ = pm.Bernoulli('ŷ', p = p, observed = y, shape = μ.shape)
+        # self.classifier = pm.Model()
+        # with self.classifier:
+        #     self.X = pm.MutableData("X", train_data)
+        #     y = data['label']
+        #     μ = pmb.BART("μ", X=self.X, Y=y, m=self.nTrees, alpha = self.α, beta = self.β)
+        #     p = pm.invlogit(μ)
+        #     ŷ = pm.Bernoulli('ŷ', p = p, observed = y, shape = μ.shape)
+        classifier = self.make_classifier(train_data)
+        with classifier:
             self.trace = pm.sample(draws = 2000)
 
     def _predict_prob(self, data):
-        proc_data = self.preprocessor.transform(data[self.features])
-        
-        with self.classifier:
-            self.X.set_value(proc_data)
+        proc_data = self.preprocess(data)
+
+        classifier = self.make_classifier(proc_data)        
+        with classifier:
+            # self.X.set_value(proc_data)
             results = pm.sample_posterior_predictive(trace = self.trace)
         
         posterior = results.to_dataframe()
@@ -239,10 +262,10 @@ class predictor_model(model):
 
     def load(self):
         with open(f'{self.db}/{self.model}', 'rb') as dillfile:
-            self.classifier, self.preprocessor, self.trace, self.X = dill.load(dillfile)
+            self.preprocessor, self.trace = dill.load(dillfile)
 
     def dump(self):
-        tosave = (self.classifier, self.preprocessor, self.trace, self.X)
+        tosave = (self.preprocessor, self.trace)
         with open(f'{self.db}/{self.model}', 'wb') as dillfile:
             dill.dump(tosave,dillfile)
 

@@ -103,7 +103,7 @@ class modelTestSuite(hasWorkspaceTestSuite):
             self.assertAlmostEqual(aucroc, 1, delta = 0.02)
         
         with self.subTest(msg = 'Testing N incorrect is good'):
-            self.assertTrue(n_incorrect < 10)
+            self.assertLess(n_incorrect, 10)
 
     def test_fit_on_inseparable_data(self):
         aucroc, n_incorrect = self.fit_on_data(0, 0)
@@ -112,7 +112,7 @@ class modelTestSuite(hasWorkspaceTestSuite):
             self.assertAlmostEqual(aucroc, 0.5, delta = 0.1)
         
         with self.subTest(msg = 'Testing that N incorrect is high'):
-            self.assertTrue(n_incorrect > 80)
+            self.assertGreater(n_incorrect, 80)
     
     def test_save_model(self):
         rng = np.random.default_rng(1)
