@@ -14,12 +14,13 @@ import numpy as np
 import pandas as pd
 from brainpy import isotopic_variants
 import statsmodels.api as sm
-from lineartree import LinearForestClassifier
+from lineartree import LinearTreeClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import GradientBoostingClassifier as GBC
+from sklearn.ensemble import BaggingClassifier
 
 class model():
     def __init__(self, args):
@@ -205,15 +206,16 @@ class predictor_model(model):
     def fit(self, data):
         data = data.copy()
         data = data[np.isfinite(data['label'])]       
-        LFclassifier = LinearForestClassifier(base_estimator=LinearRegression(),
-                                              n_estimators = 10,
-                                              max_depth = 10,
-                                              max_features = 5)
+        ltree = LinearTreeClassifier(base_estimator = LogisticRegression(solver = 'liblinear'),
+                                     criterion = 'hamming',
+                                     max_depth = 3)
+        lf_classifier = BaggingClassifier(estimator = ltree,
+                                          n_estimators = 100,
+                                          max_features = 3)
         
-        LFclassifier = CalibratedClassifierCV(LFclassifier, ensemble = False)
-        
+        cal_classifier = CalibratedClassifierCV(lf_classifier, ensemble = False)
         self.classifier = Pipeline([('scalar', StandardScaler()),
-                                    ('classifier', LFclassifier)])
+                                    ('classifier', cal_classifier)])
         self.classifier.fit(data[self.features], data['label'])
     
     def _predict_prob(self, data):
