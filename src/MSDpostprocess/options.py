@@ -24,6 +24,11 @@ class options:
             options = tomllib.load(toml)
         self.__dict__.update(options)
         
+        if hasattr(self.min_rt, '__iter__'):
+            self.min_rt = {f:r for f,r in zip(self.data, self.min_rt)}
+        else:
+            self.min_rt = {f:self.min_rt for f in self.data}
+        
         #set up logger
         self.logs = logging.getLogger('MSDpostprocess')
         self.logs.setLevel(10)

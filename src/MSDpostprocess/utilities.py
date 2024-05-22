@@ -50,7 +50,7 @@ def filter_data(lipid_data, args):
     bad_idx.extend(lipid_data[[type(o) != str or o in ['Unknown','Others'] for o in lipid_data['Ontology']]].index)
     #features eluting in the dead volume are not considered reliably identifiable in our data and are discarded
     #this is an optional runtime argument if unused min_rt = 0 and this line does nothing
-    bad_idx.extend(lipid_data[[r < args.min_rt for r in lipid_data['Average Rt(min)']]].index)
+    bad_idx.extend(lipid_data[[r < args.min_rt[f] for r,f in zip(lipid_data['Average Rt(min)'], lipid_data['file'])]].index)
     #these columns need to have valid numbers in them for the model to work
     nonnancols = ['Dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
     bad_idx.extend(lipid_data[[any(np.isnan(v)) for v in zip(*[lipid_data[c] for c in nonnancols])]].index)
