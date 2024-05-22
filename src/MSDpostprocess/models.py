@@ -19,6 +19,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import GradientBoostingClassifier as GBC
 
 class model():
     def __init__(self, args):
@@ -38,8 +39,6 @@ class model():
     def dump(self):
         with open(f'{self.db}/{self.model}', 'wb') as dillfile:
             dill.dump(self.classifier,dillfile)
-        
-
     
     def assess(self, data, tag):
         self.probs[tag] = self._predict_prob(data)
@@ -54,7 +53,8 @@ class prelim_model(model):
         data = data.copy()
         data = data[np.isfinite(data['label'])]
         data = self.preprocess(data.copy())
-        self.classifier = LogisticRegression(solver = 'liblinear')
+        # self.classifier = LogisticRegression(solver = 'liblinear')
+        self.classifier = CalibratedClassifierCV(GBC(), ensemble=False)
         self.classifier.fit(data[self.features], data['label'])
         self.logs.info(f'Fit {self.model}')
 
@@ -206,8 +206,8 @@ class predictor_model(model):
         data = data.copy()
         data = data[np.isfinite(data['label'])]       
         LFclassifier = LinearForestClassifier(base_estimator=LinearRegression(),
-                                              n_estimators = 50,
-                                              max_depth = None,
+                                              n_estimators = 10,
+                                              max_depth = 10,
                                               max_features = 5)
         
         LFclassifier = CalibratedClassifierCV(LFclassifier, ensemble = False)
