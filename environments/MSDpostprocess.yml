@@ -1,17 +1,19 @@
-name: 
-  MSDpostprocess
 channels:
-  - defaults
+  - conda-forge
+  - anaconda
+  - main
 dependencies:
-  - matplotlib=3.7.1
-  - matplotlib-base=3.7.1
-  - numpy=1.25.0
-  - numpy-base=1.25.0
-  - pandas=1.5.3
-  - pip=23.1.2
-  - python=3.11.3
-  - scikit-learn=1.2.2
-  - scipy=1.10.1
-  - statsmodels=0.13.5
+  - dill=0.3.8
+  - matplotlib-base=3.8.4
+  - matplotlib-inline=0.1.6
+  - numpy=1.24.4
+  - pandas=2.2.2
+  - pip=24.0
+  - python=3.11.8
+  - scikit-learn=1.4.2
+  - scipy=1.13.0
+  - sortedcontainers=2.4.0
+  - statsmodels=0.14.1
   - pip:
-      - brain-isotopic-distribution==1.5.11
+      - brain-isotopic-distribution==1.5.16
+      - linear-tree==0.3.5
