@@ -1,7 +1,7 @@
 #All paths and files in this document should be relative to working_directory
 #working_directory should be an absolute path
 working_directory = './'
-data = ['../example_data/training_data.tsv']
+data = ['training_data.tsv']
 #Seed value for the rng used in train-test spliting
 seed = 1
 #Analytes eluting before this time (in minutes) will be categorized as not_considered
