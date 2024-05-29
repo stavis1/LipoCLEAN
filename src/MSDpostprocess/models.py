@@ -206,7 +206,7 @@ class predictor_model(model):
     def fit(self, data):
         data = data.copy()
         data = data[np.isfinite(data['label'])]       
-        ltree = LinearTreeClassifier(base_estimator = LogisticRegression(solver = 'liblinear'),
+        ltree = LinearTreeClassifier(base_estimator = LogisticRegression(),
                                      criterion = 'hamming',
                                      max_depth = 3)
         lf_classifier = BaggingClassifier(estimator = ltree,
@@ -216,7 +216,9 @@ class predictor_model(model):
         cal_classifier = CalibratedClassifierCV(lf_classifier, ensemble = False)
         self.classifier = Pipeline([('scalar', StandardScaler()),
                                     ('classifier', cal_classifier)])
+        self.logs.info('Now fitting final classifier')
         self.classifier.fit(data[self.features], data['label'])
+        self.logs.info('Fit final classifier')
     
     def _predict_prob(self, data):
         probs = self.classifier.predict_proba(data[self.features])

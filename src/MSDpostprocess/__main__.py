@@ -5,8 +5,6 @@ Created on Wed Apr  3 10:14:41 2024
 
 @author: 4vt
 """
-import sys
-
 from MSDpostprocess.options import options, setup_workspace, validate_inputs
 args = options()
 
