@@ -1,0 +1,5 @@
+#run this from the project root
+docker build --file build/Dockerfile . -t stavisvols/msdpostprocess
+
+#run this from build/
+pyinstaller --onefile ../src/MSDpostprocess/__main__.py -n MSDpostprocess --paths ../src/MSDpostprocess/
