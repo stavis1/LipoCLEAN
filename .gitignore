@@ -169,3 +169,7 @@ tests/test_model/*
 !build/Dockerfile
 !build/requirements.txt
 !build/build_commands
+
+environments/*
+!environments/MSDpostprocess.yml
+!environments/build.yml
