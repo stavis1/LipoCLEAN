@@ -8,11 +8,14 @@ Created on Thu Apr  4 15:31:18 2024
 # import shelve
 import re
 from functools import cache
+import warnings
 
 import pickle
 import numpy as np
 import pandas as pd
-from brainpy import isotopic_variants
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", message="brainpy")
+    from brainpy import isotopic_variants
 import statsmodels.api as sm
 from lineartree import LinearTreeClassifier
 from sklearn.preprocessing import StandardScaler
