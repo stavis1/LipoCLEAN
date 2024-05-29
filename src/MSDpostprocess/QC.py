@@ -174,7 +174,7 @@ def plot_mz_QC(mz_model, args):
         mz_error_histograms(raw_vals[file], 
                             cor_vals[file], 
                             f'{file} m/z Error Correction', 
-                            os.path.join(args.output, f'QC/per_file_plots/{file}_mz_correction'), 
+                            os.path.join(args.output, f'QC/per_file_plots/{os.path.basename(file)}_mz_correction'), 
                             args.QC_plot_extensions)
     
     #ROC plots
@@ -227,7 +227,7 @@ def plot_rt_QC(rt_model, args):
                            rt_model.rt_predictions[dataset], 
                            rt_model.rt_calls[dataset], 
                            dataset, 
-                           os.path.join(args.output, f'QC/{dataset}_rt_regression'), 
+                           os.path.join(args.output, f'QC/{os.path.basename(dataset)}_rt_regression'), 
                            args.QC_plot_extensions)
 
     #ROC plots
