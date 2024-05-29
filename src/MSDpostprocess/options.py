@@ -30,6 +30,7 @@ class options:
             self.min_rt = {f:self.min_rt for f in self.data}
         
         #set up logger
+        logging.captureWarnings(True)
         self.logs = logging.getLogger('MSDpostprocess')
         self.logs.setLevel(10)
         formatter = formatter = logging.Formatter('%(asctime)s | %(levelname)s: %(message)s')
@@ -87,7 +88,8 @@ def validate_inputs(args):
                      'positive_lipids.tsv', 
                      'negative_lipids.tsv', 
                      'reanalyze_lipids.tsv',
-                     os.path.basename(args.options)]:
+                     os.path.basename(args.options),
+                     'QC']:
             path = os.path.abspath(os.path.join(args.output, file))
             if os.path.exists(path):
                 problems.append(path)
@@ -109,17 +111,18 @@ def setup_workspace(args):
     if args.mode == 'train' and not os.path.exists(args.model):
         os.mkdir(args.model)
     
-    if args.QC_plots:
+    if args.QC_plots != 'none':
         qc_path = os.path.join(args.output, 'QC')
         if not os.path.exists(qc_path):
             os.mkdir(qc_path)
         else:
             args.logs.warning('Preexisting QC path found, files will be overwritten.')
-        perfile_path = os.path.join(qc_path, 'per_file_plots')
-        if not os.path.exists(perfile_path):
-            os.mkdir(perfile_path)
         scores_path = os.path.join(qc_path, 'scores_plots')
         if not os.path.exists(scores_path):
             os.mkdir(scores_path)
+        if args.QC_plots == 'all':
+            perfile_path = os.path.join(qc_path, 'per_file_plots')
+            if not os.path.exists(perfile_path):
+                os.mkdir(perfile_path)
 
         

@@ -8,6 +8,8 @@ Created on Fri Apr  5 17:43:23 2024
 import os
 
 import matplotlib
+matplotlib.use('pdf')
+matplotlib.use('svg')
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -170,12 +172,13 @@ def plot_mz_QC(mz_model, args):
                         args.QC_plot_extensions)
     
     # per file plots
-    for file in raw_vals.keys():
-        mz_error_histograms(raw_vals[file], 
-                            cor_vals[file], 
-                            f'{file} m/z Error Correction', 
-                            os.path.join(args.output, f'QC/per_file_plots/{os.path.basename(file)}_mz_correction'), 
-                            args.QC_plot_extensions)
+    if args.QC_plots == 'all':
+        for file in raw_vals.keys():
+            mz_error_histograms(raw_vals[file], 
+                                cor_vals[file], 
+                                f'{file} m/z Error Correction', 
+                                os.path.join(args.output, f'QC/per_file_plots/{os.path.basename(file)}_mz_correction'), 
+                                args.QC_plot_extensions)
     
     #ROC plots
     if args.mode == 'train':
