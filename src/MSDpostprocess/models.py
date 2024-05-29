@@ -9,7 +9,7 @@ Created on Thu Apr  4 15:31:18 2024
 import re
 from functools import cache
 
-import dill
+import pickle
 import numpy as np
 import pandas as pd
 from brainpy import isotopic_variants
@@ -34,12 +34,12 @@ class model():
         self.logs = args.logs
     
     def load(self):
-        with open(f'{self.db}/{self.model}', 'rb') as dillfile:
-            self.classifier = dill.load(dillfile)
+        with open(f'{self.db}/{self.model}', 'rb') as picklefile:
+            self.classifier = pickle.load(picklefile)
 
     def dump(self):
-        with open(f'{self.db}/{self.model}', 'wb') as dillfile:
-            dill.dump(self.classifier,dillfile)
+        with open(f'{self.db}/{self.model}', 'wb') as picklefile:
+            pickle.dump(self.classifier, picklefile, protocol = 5)
     
     def assess(self, data, tag):
         self.probs[tag] = self._predict_prob(data)
