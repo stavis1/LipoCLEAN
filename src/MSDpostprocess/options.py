@@ -88,7 +88,7 @@ def validate_inputs(args):
                      'positive_lipids.tsv', 
                      'negative_lipids.tsv', 
                      'reanalyze_lipids.tsv',
-                     os.path.basename(args.options),
+                     os.path.basename(args.optfile),
                      'QC']:
             path = os.path.abspath(os.path.join(args.output, file))
             if os.path.exists(path):
