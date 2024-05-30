@@ -29,3 +29,4 @@ ENV AM_I_IN_A_DOCKER_CONTAINER Yes
 RUN mkdir models
 COPY --from=0 /QE_Pro_model/ /models/QE_Pro_model/
 COPY --from=0 /TOF_model/ /models/TOF_model/
+COPY --from=0 /src/MSDpostprocess/ /src/MSDpostprocess/
