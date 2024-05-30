@@ -209,7 +209,7 @@ class predictor_model(model):
     def fit(self, data):
         data = data.copy()
         data = data[np.isfinite(data['label'])]       
-        ltree = LinearTreeClassifier(base_estimator = LogisticRegression(),
+        ltree = LinearTreeClassifier(base_estimator = LogisticRegression(solver = 'newton-cg'),
                                      criterion = 'hamming',
                                      max_depth = 3)
         lf_classifier = BaggingClassifier(estimator = ltree,
