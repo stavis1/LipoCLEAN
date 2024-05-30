@@ -22,6 +22,10 @@ COPY --from=0 /env/ /env/
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
+#we want --print to return a different default options for the docker version
+#so the tool checks this environment variable
+ENV AM_I_IN_A_DOCKER_CONTAINER Yes
+
 RUN mkdir models
 COPY --from=0 /QE_Pro_model/ /models/QE_Pro_model/
 COPY --from=0 /TOF_model/ /models/TOF_model/
