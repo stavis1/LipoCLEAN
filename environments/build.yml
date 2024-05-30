@@ -14,3 +14,4 @@ dependencies:
   - pip:
       - brain-isotopic-distribution==1.5.16
       - linear-tree==0.3.5
+      - gdown

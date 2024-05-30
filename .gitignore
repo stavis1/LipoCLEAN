@@ -170,6 +170,7 @@ tests/test_model/*
 !build/requirements.txt
 !build/build_commands
 !build/build.sh
+!build/example_analysis_options.toml
 
 environments/*
 !environments/MSDpostprocess.yml
