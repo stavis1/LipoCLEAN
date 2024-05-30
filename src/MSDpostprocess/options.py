@@ -6,18 +6,34 @@ Created on Wed Apr  3 10:44:52 2024
 @author: 4vt
 """
 import os
+import sys
+import shutil
 from shutil import copy2
 import logging
+
+class InputError(Exception):
+    pass
 
 class options:
     def __init__(self):
         from argparse import ArgumentParser
         import tomllib
         
-        parser = ArgumentParser()
-        parser.add_argument('-o', '--options', action = 'store', required = True,
-                            help = 'Path to options file.')
+        parser = ArgumentParser(prog = 'MSDpostprocess',
+                                description = 'A post processing filter for MS-DIAL lipid identifications.',
+                                usage = self.help_usage())
+        parser.add_argument('-o', '--options', action = 'store', required = False, default = False,
+                            help = 'path to options file', metavar='options.toml')
+        parser.add_argument('-p', '--print', action = 'store', required = False, default = False,
+                            help = 'print a default options file with the specified name and exit', metavar = 'options.toml')
         args = parser.parse_args()
+        
+        if args.print:
+            self.print_options(args.print)
+            sys.exit(0)
+        elif not args.options:
+            raise InputError('One of "--options" or "--print" must be used.')
+        
         self.optfile = os.path.abspath(args.options)
 
         with open(args.options,'rb') as toml:
@@ -44,9 +60,24 @@ class options:
         logstream.setLevel(self.log_level)
         logstream.setFormatter(formatter)
         self.logs.addHandler(logstream)
-        
-class InputError(Exception):
-    pass
+    
+    def help_usage(self):
+        if getattr(sys, "frozen", False) and hasattr(sys, '_MEIPASS'):
+            if os.name == 'nt':
+                call_str = 'MSDpostprocess.exe'
+            else:
+                call_str = 'MSDpostprocess'
+        else:
+            call_str = 'python -m MSDpostprocess'
+        return f'{call_str} [-h] [-o options.toml] [-p options.toml]'
+    
+    def print_options(self, path):
+        if getattr(sys, "frozen", False) and hasattr(sys, '_MEIPASS'):
+            resolved_path = os.path.abspath(sys._MEIPASS)
+        else:
+            resolved_path = os.path.abspath(os.path.dirname(__file__))
+        example_options = os.path.join(resolved_path, 'example_options.toml')
+        shutil.copy2(example_options, path)
 
 def validate_inputs(args):
     #check that the options toml is valid

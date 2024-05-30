@@ -1,5 +1,5 @@
 #! /bin/bash
-pyinstaller --onefile ../src/MSDpostprocess/__main__.py -n MSDpostprocess --paths ../src/MSDpostprocess/
+pyinstaller --onefile ../src/MSDpostprocess/__main__.py -n MSDpostprocess --paths ../src/MSDpostprocess/ --add-data ../src/MSDpostprocess/example_options.toml:.
 cp dist/MSDpostprocess release_stage/
 
 python -m MSDpostprocess --options build_data/train_QE_Pro_model.toml
@@ -14,4 +14,4 @@ docker push stavisvols/msdpostprocess
 zip release_stage/example_analysis.zip example_analysis_options.toml ../../data/current_datasets/training_files_with_annotations/QE_MTBLS5583_mzexport_*
 
 gdown --fuzzy https://drive.google.com/drive/folders/1zZ-H4xzIMFjrpgyAtAly2BIeRHeUXgCm --folder
-cp MSDpostprocess/MSDpostprocess.exe results_stage/
+cp MSDpostprocess/MSDpostprocess.exe release_stage/
