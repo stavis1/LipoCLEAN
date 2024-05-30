@@ -3,7 +3,7 @@ There are three ways to install and run MSDpostprocess: as an executable, as a d
 
 ## The executable version
 This method reqires no installation but it is somewhat slower than the other options.
-1. Download the executable for your operating system, the trained model, and the example options file from the releases page.
+1. Download the executable for your operating system, the trained model, and the example options file from the [releases page](https://github.com/stavis1/MSDpostprocess/releases).
 2. Run `MSDpostprocess.exe --print options.toml` to get a default options file.
 3. Edit the options file for your experiment.
 4. Run `MSDpostprocess.exe --options options.toml`
@@ -23,7 +23,7 @@ Otherwise, if you are using virtualenv:
 4. Run `pip install -e .`
 
 To use the tool with either method:
-1. Download the trained models from the releases page.
+1. Download the trained models from the [releases page](https://github.com/stavis1/MSDpostprocess/releases).
 2. Run `python -m MSDpostprocess --print options.toml` to get a default options file.
 3. Edit the options file for your experiment.
 4. Run `python -m MSDpostprocess --options options.toml`
@@ -71,3 +71,4 @@ The tool is capable of being trained on multiple input files. The retention time
 | TripleTOF 6600 | [MTBLS4108](https://www.ebi.ac.uk/metabolights/editor/MTBLS4108/descriptors) | 1125 | TOF_model | *Rattus rattus* |
 
 Our tests have shown that a model will likely generalize to a family of instruments but that this has limits. We expect that the QE_Pro_model will work for all orbitrap systems. We do not have the data necessary to know how well the TOF model will generalize to all TOF instruments so if you are working with e.g. TimsTOF data it would be a good idea to do an initial validation of the output. The publicly available datasets used were reprocessed from raw files and annotated in-house.
+
