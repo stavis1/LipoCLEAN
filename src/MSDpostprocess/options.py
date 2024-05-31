@@ -76,12 +76,10 @@ class options:
             resolved_path = os.path.abspath(sys._MEIPASS)
         else:
             resolved_path = os.path.abspath(os.path.dirname(__file__))
-
         if os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
             example_options = os.path.join(resolved_path, 'docker_example_options.toml')
         else:
             example_options = os.path.join(resolved_path, 'example_options.toml')
- 
         shutil.copy2(example_options, path)
 
 def validate_inputs(args):

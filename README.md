@@ -30,9 +30,10 @@ To use the tool with either method:
 
 ## The Docker version
 The docker container has trained models provided under /models/. To use these get the default options.toml from step 1 below:
-1. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/msdpostprocess python -m MSDpostprocess --print /data/options.toml`
-2. Edit the options file for your experiment.
-3. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/msdpostprocess python -m MSDpostprocess --options /data/options.toml`
+1. Run `docker pull stavisvols/msdpostprocess`
+2. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/msdpostprocess python -m MSDpostprocess --print /data/options.toml`
+3. Edit the options file for your experiment.
+4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/msdpostprocess python -m MSDpostprocess --options /data/options.toml`
 The working directory will be within the docker container's filesystem.
 
 ## Example analysis
