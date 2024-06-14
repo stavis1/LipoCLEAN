@@ -212,7 +212,7 @@ class rtCorrectionTestSuit(tests.hasWorkspaceTestSuite):
                              'Average Rt(min)':obs,
                              'file':[1]*self.N})
         
-        rt_error = self.model.rt_error(data)
+        rt_error = self.model.rt_error(data)['rt_error']
         delta = np.mean(np.abs(rt_error))
         self.assertAlmostEqual(delta, 0)
 
@@ -225,7 +225,7 @@ class rtCorrectionTestSuit(tests.hasWorkspaceTestSuite):
                              'Average Rt(min)':obs,
                              'file':[1]*self.N})
         
-        rt_error = self.model.rt_error(data)
+        rt_error = self.model.rt_error(data)['rt_error']
         delta = np.mean(np.abs(rt_error))
         self.assertLess(delta, 0.5)
 
@@ -240,7 +240,7 @@ class rtCorrectionTestSuit(tests.hasWorkspaceTestSuite):
                              'Average Rt(min)':obs,
                              'file':[1]*self.N})
         
-        rt_error = self.model.rt_error(data)
+        rt_error = self.model.rt_error(data)['rt_error']
         delta = np.mean(np.abs(rt_error - noise))
         self.assertLess(delta, 0.5)
 
@@ -254,7 +254,7 @@ class rtCorrectionTestSuit(tests.hasWorkspaceTestSuite):
                              'Average Rt(min)':obs,
                              'file':[1]*self.N})
         
-        rt_error = self.model.rt_error(data)
+        rt_error = self.model.rt_error(data)['rt_error']
         delta = np.mean(np.abs(rt_error - noise))
         self.assertLess(delta, 0.5)
 
