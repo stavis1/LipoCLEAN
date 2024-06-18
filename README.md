@@ -69,7 +69,7 @@ The tool is capable of being trained on multiple input files. The retention time
 | Q-Exactive | [MTBLS5583](https://www.ebi.ac.uk/metabolights/editor/MTBLS5583/descriptors) | 742 | QE_Pro_model | *Canis familiaris* |
 | LTQ Velos Pro | in-house | 1076 | QE_Pro_model | *Aspergillus fumigatus* |
 | LTQ Velos Pro | in-house | 545 | QE_Pro_model | *Laccaria bicolor* |
-| TripleTOF 6600 | [MTBLS4108](https://www.ebi.ac.uk/metabolights/editor/MTBLS4108/descriptors) | 1125 | TOF_model | *Rattus rattus* |
+| TripleTOF 6600 | [MTBLS4108](https://www.ebi.ac.uk/metabolights/editor/MTBLS4108/descriptors) | 1125 | TOF_model | *Rattus norvegicus* |
 
 Our tests have shown that a model will likely generalize to a family of instruments but that this has limits. We expect that the QE_Pro_model will work for all orbitrap systems. We do not have the data necessary to know how well the TOF model will generalize to all TOF instruments so if you are working with e.g. TimsTOF data it would be a good idea to do an initial validation of the output. The publicly available datasets used were reprocessed from raw files and annotated in-house.
 
