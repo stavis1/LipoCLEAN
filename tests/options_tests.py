@@ -10,7 +10,7 @@ import os
 import unittest
 from shutil import rmtree
 
-from MSDpostprocess.options import validate_inputs, setup_workspace, InputError
+from lipoCLEAN.options import validate_inputs, setup_workspace, InputError
 from tests import baseTestSuite, hasWorkspaceTestSuite
 
 class validateTestSuite(baseTestSuite):
@@ -69,7 +69,7 @@ class workspaceTestSuite(hasWorkspaceTestSuite):
     def test_workspace_has_dirs(self):
         out = self.args.output
         for folder in [os.path.join(out, d) for d in ['', 'QC', 'QC/per_file_plots', 'QC/scores_plots']]:
-            with self.subTest():
+            with self.subTest(f'Testing folder {folder} exists.'):
                 self.assertTrue(os.path.exists(folder))
 
 if __name__ == "__main__":

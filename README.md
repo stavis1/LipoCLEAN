@@ -1,46 +1,46 @@
-# MSDpostprocess: A machine learning based quality filter for lipid identifications from MS-DIAL
-There are three ways to install and run MSDpostprocess: as an executable, as a docker container, and as a python package.
+# LipoCLEAN: A machine learning based quality filter for lipid identifications from MS-DIAL
+There are three ways to install and run LipoCLEAN: as an executable, as a docker container, and as a python package.
 
 ## The executable version
-This method reqires no installation but it is somewhat slower than the other options.
-1. Download the executable for your operating system, the trained model, and the example options file from the [releases page](https://github.com/stavis1/MSDpostprocess/releases).
-2. Run `MSDpostprocess.exe --print options.toml` to get a default options file.
+This method requires no installation but it is somewhat slower than the other options.
+1. Download the executable for your operating system, the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
+2. Run `lipoCLEAN.exe --print options.toml` to get a default options file.
 3. Edit the options file for your experiment.
-4. Run `MSDpostprocess.exe --options options.toml`
+4. Run `lipoCLEAN.exe --options options.toml`
 
 ## The conda/virtualenv version
 To set up the conda environment for the tool:
-1. Download the MSDpostprocess repository and navigate to the `environments` directory.
-2. Run `conda env create -p msdp_env --file MSDpostprocess.yml`
-3. Run `conda activate ./msdp_env`
+1. Download the LipoCLEAN repository and navigate to the `environments` directory.
+2. Run `conda env create -p lipo_env --file lipoCLEAN.yml`
+3. Run `conda activate ./lipo_env`
 4. Navigate to the repository root.
 5. Run `pip install -e .`
 
 Otherwise, if you are using virtualenv:
 1. Navigate to the repository root.
-2. Run `virtualenv environments/msdp_env`
+2. Run `virtualenv environments/lipo_env`
 3. Activate the environment
 4. Run `pip install -e .`
 
 To use the tool with either method:
-1. Download the trained models from the [releases page](https://github.com/stavis1/MSDpostprocess/releases).
-2. Run `python -m MSDpostprocess --print options.toml` to get a default options file.
+1. Download the trained models from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
+2. Run `python -m lipoCLEAN --print options.toml` to get a default options file.
 3. Edit the options file for your experiment.
-4. Run `python -m MSDpostprocess --options options.toml`
+4. Run `python -m lipoCLEAN --options options.toml`
 
 ## The Docker version
 The docker container has trained models provided under /models/. To use these get the default options.toml from step 1 below:
-1. Run `docker pull stavisvols/msdpostprocess`
-2. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/msdpostprocess python -m MSDpostprocess --print /data/options.toml`
+1. Run `docker pull stavisvols/lipoclean`
+2. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print /data/options.toml`
 3. Edit the options file for your experiment.
-4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/msdpostprocess python -m MSDpostprocess --options /data/options.toml`
+4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/options.toml`
 The working directory will be within the docker container's filesystem.
 
 ## Example analysis
 1. Install the tool using one of the above methods.
 2. Download `QE_Pro_model.zip` and `example_analysis.zip` from the releases page.
 3. Extract both archives. There should be no folders nested under `QE_Pro_model/` and `example_analysis/`.
-4. Run `MSDpostprocess.exe --options example_analysis/example_analysis_options.toml`
+4. Run `lipoCLEAN.exe --options example_analysis/example_analysis_options.toml`
 
 On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
 
@@ -73,3 +73,4 @@ The tool is capable of being trained on multiple input files. The retention time
 
 Our tests have shown that a model will likely generalize to a family of instruments but that this has limits. We expect that the QE_Pro_model will work for all orbitrap systems. We do not have the data necessary to know how well the TOF model will generalize to all TOF instruments so if you are working with e.g. TimsTOF data it would be a good idea to do an initial validation of the output. The publicly available datasets used were reprocessed from raw files and annotated in-house.
 
+Disclaimer: We are not in any way associated with the developers of MS-DIAL, we are merely enthusiastic users of their software.

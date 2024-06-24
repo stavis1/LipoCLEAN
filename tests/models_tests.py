@@ -14,9 +14,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import binom
 
-from MSDpostprocess.models import mz_correction, rt_correction, predictor_model
-from MSDpostprocess.models import isotope_error, add_isotope_error, expected_isopacket
-from MSDpostprocess.options import options
+from lipoCLEAN.models import mz_correction, rt_correction, predictor_model
+from lipoCLEAN.models import isotope_error, add_isotope_error, expected_isopacket
+from lipoCLEAN.options import options
 import tests
 
 class mzModelTestSuite(tests.modelTestSuite):

@@ -10,7 +10,7 @@ import unittest
 
 import pandas as pd
 
-from MSDpostprocess.utilities import filter_data, read_files, split_index, write_data
+from lipoCLEAN.utilities import filter_data, read_files, split_index, write_data
 from tests import baseTestSuite, hasWorkspaceTestSuite
 
 class readTestSuite(baseTestSuite):    

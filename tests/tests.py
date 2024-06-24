@@ -16,8 +16,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 
-from MSDpostprocess.options import options, setup_workspace
-from MSDpostprocess.utilities import read_files
+from lipoCLEAN.options import options, setup_workspace
+from lipoCLEAN.utilities import read_files
 
 
 class baseTestSuite(unittest.TestCase):
@@ -27,7 +27,7 @@ class baseTestSuite(unittest.TestCase):
         test_path = os.path.dirname(__name__)
         sys.argv = [sys.argv[0], '--options', os.path.join(test_path, 'options.toml')]
         self.args = options()
-        logger = logging.getLogger('MSDpostprocess')
+        logger = logging.getLogger('lipoCLEAN')
         logger.setLevel(logging.FATAL)
         os.chdir(self.args.working_directory)
         pass
@@ -35,7 +35,7 @@ class baseTestSuite(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.init_dir)
         sys.argv = self.init_argv
-        os.remove('MSDpostprocess.log')
+        os.remove('lipoCLEAN.log')
         pass
 
 class hasWorkspaceTestSuite(baseTestSuite):

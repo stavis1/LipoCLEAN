@@ -8,7 +8,7 @@ Created on Wed Apr 10 09:28:54 2024
 
 import unittest
 
-from MSDpostprocess.QC import TPR, FPR, FDR
+from lipoCLEAN.QC import TPR, FPR, FDR
 from tests import baseTestSuite
 
 class metricsTestSuite(baseTestSuite):

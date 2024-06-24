@@ -5,12 +5,12 @@ Created on Wed Apr  3 10:14:41 2024
 
 @author: 4vt
 """
-from MSDpostprocess.options import options, setup_workspace, validate_inputs
+from lipoCLEAN.options import options, setup_workspace, validate_inputs
 args = options()
 
-from MSDpostprocess.utilities import read_files, filter_data, split_index, write_data
-from MSDpostprocess.models import mz_correction, rt_correction, predictor_model, add_isotope_error
-from MSDpostprocess.QC import plot_mz_QC, plot_rt_QC, plot_final_QC, plot_pairwise_scores
+from lipoCLEAN.utilities import read_files, filter_data, split_index, write_data
+from lipoCLEAN.models import mz_correction, rt_correction, predictor_model, add_isotope_error
+from lipoCLEAN.QC import plot_mz_QC, plot_rt_QC, plot_final_QC, plot_pairwise_scores
 
 validate_inputs(args)
 setup_workspace(args)

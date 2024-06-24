@@ -19,7 +19,7 @@ class options:
         from argparse import ArgumentParser
         import tomllib
         
-        parser = ArgumentParser(prog = 'MSDpostprocess',
+        parser = ArgumentParser(prog = 'lipoCLEAN',
                                 description = 'A post processing filter for MS-DIAL lipid identifications.',
                                 usage = self.help_usage())
         parser.add_argument('-o', '--options', action = 'store', required = False, default = False,
@@ -47,11 +47,11 @@ class options:
         
         #set up logger
         logging.captureWarnings(True)
-        self.logs = logging.getLogger('MSDpostprocess')
+        self.logs = logging.getLogger('lipoCLEAN')
         self.logs.setLevel(10)
         formatter = formatter = logging.Formatter('%(asctime)s | %(levelname)s: %(message)s')
 
-        logfile = logging.FileHandler(os.path.join(self.working_directory, 'MSDpostprocess.log'))
+        logfile = logging.FileHandler(os.path.join(self.working_directory, 'lipoCLEAN.log'))
         logfile.setLevel(10)
         logfile.setFormatter(formatter)
         self.logs.addHandler(logfile)
@@ -64,11 +64,11 @@ class options:
     def help_usage(self):
         if getattr(sys, "frozen", False) and hasattr(sys, '_MEIPASS'):
             if os.name == 'nt':
-                call_str = 'MSDpostprocess.exe'
+                call_str = 'lipoCLEAN.exe'
             else:
-                call_str = 'MSDpostprocess'
+                call_str = 'lipoCLEAN'
         else:
-            call_str = 'python -m MSDpostprocess'
+            call_str = 'python -m lipoCLEAN'
         return f'{call_str} [-h] [-o options.toml] [-p options.toml]'
     
     def print_options(self, path):

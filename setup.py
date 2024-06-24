@@ -8,9 +8,9 @@ Created on Tue May 28 13:14:54 2024
 
 import setuptools
 
-setuptools.setup(name="MSDpostprocess",
+setuptools.setup(name="lipoCLEAN",
                  version="0.0.0",
-                 url="https://github.com/stavis1/MSDpostprocess",
+                 url="https://github.com/stavis1/lipoCLEAN",
                  author="Steven Tavis",
                  author_email="stavis@vols.utk.edu",
                  package_dir={"": "src"},
