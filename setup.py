@@ -20,15 +20,7 @@ setuptools.setup(name="lipoCLEAN",
                  classifiers=['License :: OSI Approved :: MIT License',
                               'Operating System :: OS Independent',
                               'Programming Language :: Python :: 3.11'],
-                 python_requires='==3.11.9',
-                 install_requires=['matplotlib==3.8.4',
-                                   'numpy==1.24.4',
-                                   'pandas==2.2.2',
-                                   'pip==24.0',
-                                   'scikit-learn==1.4.2',
-                                   'statsmodels==0.14.1',
-                                   'brain-isotopic-distribution==1.5.16',
-                                   'linear-tree==0.3.5'])
+                 python_requires='==3.11.9')
 
 
 
