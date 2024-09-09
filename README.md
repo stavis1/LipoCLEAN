@@ -4,9 +4,9 @@ There are three ways to install and run LipoCLEAN: as an executable, as a docker
 ## The executable version
 This method requires no installation but it is somewhat slower than the other options.
 1. Download the executable for your operating system, the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
-2. Run `lipoCLEAN.exe --print options.toml` to get a default options file.
+2. Run `lipoCLEAN.exe --print options.txt` to get a default options file.
 3. Edit the options file for your experiment.
-4. Run `lipoCLEAN.exe --options options.toml`
+4. Run `lipoCLEAN.exe --options options.txt`
 
 ## The conda/virtualenv version
 To set up the conda environment for the tool:
@@ -24,23 +24,23 @@ Otherwise, if you are using virtualenv:
 
 To use the tool with either method:
 1. Download the trained models from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
-2. Run `python -m lipoCLEAN --print options.toml` to get a default options file.
+2. Run `python -m lipoCLEAN --print options.txt` to get a default options file.
 3. Edit the options file for your experiment.
-4. Run `python -m lipoCLEAN --options options.toml`
+4. Run `python -m lipoCLEAN --options options.txt`
 
 ## The Docker version
-The docker container has trained models provided under /models/. To use these get the default options.toml from step 1 below:
+The docker container has trained models provided under /models/. To use these get the default options.txt from step 1 below:
 1. Run `docker pull stavisvols/lipoclean`
-2. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print /data/options.toml`
+2. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print /data/options.txt`
 3. Edit the options file for your experiment.
-4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/options.toml`
+4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/options.txt`
 The working directory will be within the docker container's filesystem.
 
 ## Example analysis
 1. Install the tool using one of the above methods.
 2. Download `QE_Pro_model.zip` and `example_analysis.zip` from the releases page.
 3. Extract both archives. There should be no folders nested under `QE_Pro_model/` and `example_analysis/`.
-4. Run `lipoCLEAN.exe --options example_analysis/example_analysis_options.toml`
+4. Run `lipoCLEAN.exe --options example_analysis/example_analysis_options.txt`
 
 On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
 
