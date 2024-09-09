@@ -124,7 +124,7 @@ def validate_inputs(args):
                      'reanalyze_lipids.tsv',
                      os.path.basename(args.optfile),
                      'QC']:
-            path = os.path.abspath(os.path.join(args.output, file))
+            path = os.path.abspath(os.path.join(os.path.join(args.working_directory, args.output), file))
             if os.path.exists(path):
                 problems.append(path)
         if problems:
