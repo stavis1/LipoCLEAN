@@ -23,9 +23,9 @@ class options:
                                 description = 'A post processing filter for MS-DIAL lipid identifications.',
                                 usage = self.help_usage())
         parser.add_argument('-o', '--options', action = 'store', required = False, default = False,
-                            help = 'path to options file', metavar='options.toml')
+                            help = 'path to options file', metavar='options.txt')
         parser.add_argument('-p', '--print', action = 'store', required = False, default = False,
-                            help = 'print a default options file with the specified name and exit', metavar = 'options.toml')
+                            help = 'print a default options file with the specified name and exit', metavar = 'options.txt')
         args = parser.parse_args()
         
         if args.print:
@@ -69,7 +69,7 @@ class options:
                 call_str = 'lipoCLEAN'
         else:
             call_str = 'python -m lipoCLEAN'
-        return f'{call_str} [-h] [-o options.toml] [-p options.toml]'
+        return f'{call_str} [-h] [-o options.txt] [-p options.txt]'
     
     def print_options(self, path):
         if getattr(sys, "frozen", False) and hasattr(sys, '_MEIPASS'):
@@ -77,9 +77,9 @@ class options:
         else:
             resolved_path = os.path.abspath(os.path.dirname(__file__))
         if os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
-            example_options = os.path.join(resolved_path, 'docker_example_options.toml')
+            example_options = os.path.join(resolved_path, 'docker_example_options.txt')
         else:
-            example_options = os.path.join(resolved_path, 'example_options.toml')
+            example_options = os.path.join(resolved_path, 'example_options.txt')
         shutil.copy2(example_options, path)
 
 def validate_inputs(args):
