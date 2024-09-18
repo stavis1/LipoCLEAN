@@ -159,20 +159,13 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-example_data/*
-!example_data/example_output_negative.txt
-!example_data/example_output_positive.txt
-!example_data/options.toml
-!example_data/training_data.tsv
-
 tests/test_model/*
 tests/test_dir/*
 
 !build/Dockerfile
 !build/requirements.txt
-!build/build_commands
 !build/build.sh
-!build/example_analysis_options.toml
+!build/example_analysis_options.txt
 
 environments/*
 !environments/MSDpostprocess.yml
