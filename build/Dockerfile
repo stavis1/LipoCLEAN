@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.11-slim AS lipoCLEAN_build
+FROM python:3.11.9-slim
 
 COPY *.* /
 COPY src/lipoCLEAN/ /src/lipoCLEAN/
@@ -15,7 +15,7 @@ ENV PATH=/env/bin:$PATH
 RUN pip install -e .
 
 #second stage docker container that doesn't have the training data
-FROM python:3.11-slim
+FROM python:3.11.9-slim
 
 COPY --from=0 /env/ /env/
 #this allows us to use the env without activating it
