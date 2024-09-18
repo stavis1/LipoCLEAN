@@ -1,5 +1,0 @@
-#run this from the project root
-docker build --file build/Dockerfile . -t stavisvols/lipoclean
-
-#run this from build/
-pyinstaller --onefile ../src/lipoCLEAN/__main__.py -n LipoCLEAN --paths ../src/lipoCLEAN/
