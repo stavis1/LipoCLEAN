@@ -54,7 +54,7 @@ else:
 lipid_data = final_model.classify(lipid_data)
 write_data(lipid_data, args)
 
-if args.QC_plots:
+if args.QC_plots != 'none':
     plot_mz_QC(mz_model, args)
     plot_rt_QC(rt_model, args)
     plot_final_QC(final_model, args)
