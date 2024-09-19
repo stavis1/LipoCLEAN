@@ -7,37 +7,36 @@ There are three ways to install and run LipoCLEAN: as an executable, as a docker
 This method requires no installation but it is somewhat slower than the other options.
 1. Download the executable for your operating system, the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
 2. Extract `example_analysis.zip` and `QE_Pro_model.zip` into the same folder. There should be no folders nested under `QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
-3. Run `lipoCLEAN.exe --options example_analysis_options.txt`.
-4. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
-5. If you want a default version of the options file run `lipoCLEAN.exe --print options.txt`.
-6. To use the tool on other data edit the `options.txt` file.
-
-On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
+3. Add `LipoCLEAN.exe` to this folder.
+4. Open the folder with these files in a terminal such as `cmd.exe` or `bash`.
+5. Run `lipoCLEAN.exe --options example_analysis_options.txt`. On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
+6. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
+7. If you want a default version of the options file run `lipoCLEAN.exe --print options.txt`.
+8. To use the tool on other data edit the `options.txt` file.
 
 ## The Conda version
 To set up the Conda environment for the tool:
-1. Download the LipoCLEAN repository and navigate to the `environments` directory.
-2. Run `conda env create -p lipo_env --file lipoCLEAN.yml`
-3. Run `conda activate ./lipo_env`
-4. Navigate to the repository root.
-5. Run `pip install .`
-6. Download the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
-7. Extract `example_analysis.zip` and `QE_Pro_model.zip` into the same folder. There should be no folders nested under `QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
-8. Run `python -m lipoCLEAN --options example_analysis_options.txt`
-9. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
-10. If you want a default version of the options file run `python -m lipoCLEAN --print options.txt`
-11. To use the tool on other data edit the `options.txt` file.
-
-On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
+1. Download the LipoCLEAN git repository and navigate to the `environments` directory.
+2. Open the directory in a terminal such as `cmd.exe` or `bash`.
+3. Run `conda env create -p lipo_env --file lipoCLEAN.yml`
+4. Run `conda activate ./lipo_env`
+5. Navigate to the repository root.
+6. Run `pip install .`
+7. Download the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
+8. Extract `example_analysis.zip` and `QE_Pro_model.zip` into the same folder. There should be no folders nested under `QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
+9. Run `python -m lipoCLEAN --options example_analysis_options.txt` On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
+10. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
+11. If you want a default version of the options file run `python -m lipoCLEAN --print options.txt`
+12. To use the tool on other data edit the `options.txt` file.
 
 ## The Docker version
 The docker container has trained models provided under /models/. To use these get the default options.txt from step below:
-1. Run `docker pull stavisvols/lipoclean`
-2. Download the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
-3. Extract `QE_Pro_model.zip`.
+1. Download the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
+3. Extract `example_analysis.zip` and `QE_Pro_model.zip` into the same folder. There should be no folders nested under `QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
 4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/docker_example_analysis_options.txt`
-5. If you want the default docker options file run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print /data/options.txt`
-6. To use the tool on other data edit the `options.txt` file.
+5. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
+6. If you want the default docker options file run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print /data/options.txt`
+7. To use the tool on other data edit the `options.txt` file.
 
 ## MS-Dial export settings for inference
 1. Click "Export" along the top bar
