@@ -1,7 +1,7 @@
 
 
 # LipoCLEAN: A machine learning based quality filter for lipid identifications from MS-DIAL
-There are three ways to install and run LipoCLEAN: as an executable, as a docker container, and as a python package.
+There are three ways to install and run LipoCLEAN: as an executable, as a Docker container, and as a Python package.
 
 ## The executable version
 This method requires no installation but it is somewhat slower than the other options.
@@ -30,7 +30,7 @@ To set up the Conda environment for the tool:
 12. To use the tool on other data edit the `options.txt` file.
 
 ## The Docker version
-The docker container has trained models provided under /models/. To use these get the default options.txt from step below:
+The Docker container has trained models provided under /models/. To use these get the default options.txt from step below:
 1. Download the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
 3. Extract `example_analysis.zip` and `QE_Pro_model.zip` into the same folder. There should be no folders nested under `QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
 4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/docker_example_analysis_options.txt`
@@ -68,6 +68,8 @@ The tool is capable of being trained on multiple input files. The retention time
 Our tests have shown that a model will likely generalize to a family of instruments but that this has limits. We expect that the QE_Pro_model will work for all Orbitrap systems. We do not have the data necessary to know how well the TOF model will generalize to all TOF instruments so if you are working with e.g. TimsTOF data it would be a good idea to do an initial validation of the output. The publicly available datasets used were reprocessed from raw files and annotated in-house.
 
 ## Other information
+
+We have tested the tool on Windows 10 and Ubuntu 22.04. Although we have not tested this, we expect that the Docker version will work on Macs with intel chips and that the Conda version should work on any machine that has Conda installed.
 
 The `tests` and `build` directories in this repository are intended for internal development use only and the scripts they contain are not expected to work on other systems.
 
