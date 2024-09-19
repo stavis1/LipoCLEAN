@@ -20,6 +20,7 @@ mkdir tmp
 cd tmp
 ln ../../../data/current_datasets/training_files_with_annotations/QE_MTBLS5583_mzexport_* ./
 ln ../example_analysis_options.txt ./
+ln ../docker_example_analysis_options.txt ./
 zip ../release_stage/example_analysis.zip *
 cd ../
 rm -r tmp

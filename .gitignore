@@ -166,6 +166,7 @@ tests/test_dir/*
 !build/requirements.txt
 !build/build.sh
 !build/example_analysis_options.txt
+!build/docker_example_analysis_options.txt
 
 environments/*
 !environments/MSDpostprocess.yml
