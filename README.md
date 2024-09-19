@@ -57,7 +57,7 @@ A .txt will now be generated in the chosen directory with the information requir
 
 The tool is capable of being trained on multiple input files. The retention time correction is run on a per-input-file basis. Multiple experiments can be used to generate training data, but it is suggested that they are input as separate files for chromatography alignment purposes. 
 
-## The datasets used for training.
+## The datasets used for training
 | Instrument | Source | N  | Model | Organism |
 | :--------- | :----- | :- | :---- | :------- |
 | Q-Exactive | [MTBLS5583](https://www.ebi.ac.uk/metabolights/editor/MTBLS5583/descriptors) | 742 | QE_Pro_model | *Canis familiaris* |
@@ -65,7 +65,18 @@ The tool is capable of being trained on multiple input files. The retention time
 | LTQ Velos Pro | in-house | 545 | QE_Pro_model | *Laccaria bicolor* |
 | TripleTOF 6600 | [MTBLS4108](https://www.ebi.ac.uk/metabolights/editor/MTBLS4108/descriptors) | 1125 | TOF_model | *Rattus norvegicus* |
 
-Our tests have shown that a model will likely generalize to a family of instruments but that this has limits. We expect that the QE_Pro_model will work for all orbitrap systems. We do not have the data necessary to know how well the TOF model will generalize to all TOF instruments so if you are working with e.g. TimsTOF data it would be a good idea to do an initial validation of the output. The publicly available datasets used were reprocessed from raw files and annotated in-house.
+Our tests have shown that a model will likely generalize to a family of instruments but that this has limits. We expect that the QE_Pro_model will work for all Orbitrap systems. We do not have the data necessary to know how well the TOF model will generalize to all TOF instruments so if you are working with e.g. TimsTOF data it would be a good idea to do an initial validation of the output. The publicly available datasets used were reprocessed from raw files and annotated in-house.
+
+## Other information
+
+The `tests` and `build` directories in this repository are intended for internal development use only and the scripts they contain are not expected to work on other systems.
+
+ If you wish to compile the executable version yourself:
+ 1. Create and activate a Conda environment using `environments/build.yml`.
+ 2. Run `pip install .` at the repository root.
+ 3. Navigate to `build/`.
+ 4. Run `pyinstaller --onefile ../src/lipoCLEAN/__main__.py -n LipoCLEAN --paths ../src/lipoCLEAN/ --add-data ../src/lipoCLEAN/example_options.txt:.`
+ 5. The executable will be found in a newly created `dist/` directory
 
 Disclaimer: We are not in any way associated with the developers of MS-DIAL, we are merely enthusiastic users of their software.
 
