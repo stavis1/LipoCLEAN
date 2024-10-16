@@ -50,6 +50,9 @@ QC_plot_extensions = ['png']
 #All logs will be saved to MSDpostprocess.log regardless of this setting.
 log_level = 10
 
+#Any entry without a finite, numerical value in these columns will be removed.
+required_cols = ['Dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
+
 #The component models of this tool score putative IDs between 0 and 1.
 #These cutoffs determine the score threshold above which an ID is considered positive.
 [cutoffs]

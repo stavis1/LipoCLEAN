@@ -43,7 +43,7 @@ def filter_data(lipid_data, args):
     #first pass filter for extremely low confidence IDs
     bad_idx = []
     #must have MS2 data for ID, matches based on RT and exact mass are not considered valid
-    bad_idx.extend(lipid_data[[not(mz and rt) for mz,rt in zip(lipid_data['m/z matched'],lipid_data['RT matched'])]].index)
+    bad_idx.extend(lipid_data[np.logical_not(lipid_data['m/z matched'])].index)
     #MS-Dial annotates some features that don't have a formula, we do not consider this an ID
     bad_idx.extend(lipid_data[[(('D' in f) or ('i' in f)) if type(f) == str else True for f in lipid_data['Formula']]].index) #this breaks brainpy
     #features with an unknown ontology are also not considered IDs
@@ -52,7 +52,7 @@ def filter_data(lipid_data, args):
     #this is an optional runtime argument if unused min_rt = 0 and this line does nothing
     bad_idx.extend(lipid_data[[r < args.min_rt[f] for r,f in zip(lipid_data['Average Rt(min)'], lipid_data['file'])]].index)
     #these columns need to have valid numbers in them for the model to work
-    nonnancols = ['Dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
+    nonnancols = args.required_cols
     bad_idx.extend(lipid_data[[any(np.isnan(v)) for v in zip(*[lipid_data[c] for c in nonnancols])]].index)
     bad_idx.extend(lipid_data[[type(s) != str for s in lipid_data['MS1 isotopic spectrum']]].index)
     bad_idx = list(set(bad_idx))

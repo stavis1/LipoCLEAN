@@ -53,6 +53,9 @@ QC_plot_extensions = ['png']
 #All logs will be saved to MSDpostprocess.log regardless of this setting.
 log_level = 10
 
+#Any entry without a finite, numerical value in these columns will be removed.
+required_cols = ['Weighted dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
+
 #The component models of this tool score putative IDs between 0 and 1.
 #These cutoffs determine the score threshold above which an ID is considered positive.
 [cutoffs]
@@ -66,6 +69,6 @@ predictor_model = [0.25,0.75]
 #If you wish to add predictors, e.g. CCS error, you may input the mzmatrix column names here.
 #However, a new model will have to be trained to work with the new predictors.
 [features]
-mz_correction = ['Dot product', 'S/N average', 'isotope_error']
-rt_correction = ['Dot product', 'S/N average', 'isotope_error', 'mz_error']
-predictor_model = ['Dot product', 'S/N average', 'isotope_error', 'mz_error', 'rt_error']
+mz_correction = ['Weighted dot product', 'S/N average', 'isotope_error']
+rt_correction = ['Weighted dot product', 'S/N average', 'isotope_error', 'mz_error']
+predictor_model = ['Weighted dot product', 'S/N average', 'isotope_error', 'mz_error', 'rt_error']

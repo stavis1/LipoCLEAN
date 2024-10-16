@@ -16,6 +16,7 @@ from matplotlib import cm
 import matplotlib.patches as mpatches
 import numpy as np
 import pandas as pd
+from collections import defaultdict
 
 #settings
 fsize = 12
@@ -285,11 +286,13 @@ def plot_final_QC(final_model, args):
 def scores_plot(predictor1, predictor2, data, path, types):
     colors = get_colors(data['score'])
     sm = get_sm(data['score'])
-    log_pred = {'Dot product':False, 
-                'S/N average':True, 
-                'isotope_error':True, 
-                'mz_error':False, 
-                'rt_error':False}
+    log_pred = defaultdict(lambda: False, 
+                           {'Weighted dot product':False,
+                            'Dot product':False, 
+                            'S/N average':True, 
+                            'isotope_error':True, 
+                            'mz_error':False, 
+                            'rt_error':False})
 
     fig, ax = plt.subplots(figsize = size)
     ax.scatter(data[predictor1], data[predictor2], 
@@ -309,7 +312,7 @@ def scores_plot(predictor1, predictor2, data, path, types):
 
 def plot_pairwise_scores(data, args):
     from itertools import combinations
-    predictors = ['Dot product','S/N average','isotope_error','mz_error','rt_error']
+    predictors = args.features['predictor_model']
     for pair in combinations(predictors, 2):
         name = f'{pair[0]}_{pair[1]}'.replace('/','-')
         scores_plot(pair[0], 
