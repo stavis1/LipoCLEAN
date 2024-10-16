@@ -30,19 +30,22 @@ if args.mode == 'train':
     mz_model.fit(lipid_data.loc[train_idx])
     mz_model.dump()
     mz_model.assess(lipid_data.loc[train_idx], 'Training')
-    mz_model.assess(lipid_data.loc[test_idx], 'Test')
+    if args.test_split < 1:
+        mz_model.assess(lipid_data.loc[test_idx], 'Test')
     lipid_data = mz_model.correct_data(lipid_data)
 
     rt_model.fit(lipid_data.loc[train_idx])
     rt_model.dump()
     rt_model.assess(lipid_data.loc[train_idx], 'Training')
-    rt_model.assess(lipid_data.loc[test_idx], 'Test')
+    if args.test_split < 1:
+        rt_model.assess(lipid_data.loc[test_idx], 'Test')
     lipid_data = rt_model.correct_data(lipid_data)
     
     final_model.fit(lipid_data.loc[train_idx])
     final_model.dump()
     final_model.assess(lipid_data.loc[train_idx], 'Training')
-    final_model.assess(lipid_data.loc[test_idx], 'Test')
+    if args.test_split < 1:
+        final_model.assess(lipid_data.loc[test_idx], 'Test')
     
 else:
     mz_model.load()
