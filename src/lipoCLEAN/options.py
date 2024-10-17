@@ -77,10 +77,13 @@ class options:
         else:
             resolved_path = os.path.abspath(os.path.dirname(__file__))
         if os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
+            print_path = '/data/'
             example_options = os.path.join(resolved_path, f'docker_example_options_{version}.txt')
         else:
+            print_path = './'
             example_options = os.path.join(resolved_path, f'example_options_{version}.txt')
-        shutil.copy2(example_options, 'options.txt')
+        target_file = os.path.join(print_path, 'options.txt')
+        shutil.copy2(example_options, target_file)
 
 def validate_inputs(args):
     #check that the options toml is valid
