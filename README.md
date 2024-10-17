@@ -5,7 +5,7 @@ There are three ways to install and run LipoCLEAN: as an executable, as a Docker
 
 ## The executable version
 This method requires no installation but it is somewhat slower than the other options.
-1. Download the executable for your operating system, the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
+1. Download the executable for your operating system, the trained model, and the example analysis materials from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
 2. Extract `example_analysis.zip` and `MSD4_QE_Pro_model.zip` into the same folder. There should be no folders nested under `MSD4_QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
 3. Add `LipoCLEAN.exe` to this folder.
 4. Open the folder with these files in a terminal such as `cmd.exe` or `bash`.
@@ -22,7 +22,7 @@ To set up the Conda environment for the tool:
 4. Run `conda activate ./lipo_env`
 5. Navigate to the repository root.
 6. Run `pip install .`
-7. Download the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
+7. Download the trained model, and the example analysis materials from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
 8. Extract `example_analysis.zip` and `MSD4_QE_Pro_model.zip` into the same folder. There should be no folders nested under `MSD4_QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
 9. Run `python -m lipoCLEAN --options example_analysis_options.txt` On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
 10. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
@@ -31,7 +31,7 @@ To set up the Conda environment for the tool:
 
 ## The Docker version
 The Docker container has trained models provided under /models/. To use these get the default options.txt from step below:
-1. Download the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
+1. Download the example analysis materials from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
 3. Extract `example_analysis.zip` and `MSD4_QE_Pro_model.zip` into the same folder. There should be no folders nested under `MSD4_QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
 4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/docker_example_analysis_options.txt`
 5. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
