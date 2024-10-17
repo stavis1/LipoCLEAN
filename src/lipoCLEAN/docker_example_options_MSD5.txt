@@ -23,8 +23,7 @@ ppm = false
 
 #Persistant model directory. If training this will be created for you.
 #The docker image contains two trained models that you can use.
-model = '../models/QE_Pro_model'
-#model = '../models/TOF_model'
+model = '../models/MSD5_QE_Pro_model'
 
 #If true a preexisting model and outputs will be overwritten.
 overwrite = false
@@ -54,7 +53,7 @@ QC_plot_extensions = ['png']
 log_level = 10
 
 #Any entry without a finite, numerical value in these columns will be removed.
-required_cols = ['Weighted dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
+required_cols = ['Simple dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
 
 #The component models of this tool score putative IDs between 0 and 1.
 #These cutoffs determine the score threshold above which an ID is considered positive.
@@ -69,6 +68,6 @@ predictor_model = [0.25,0.75]
 #If you wish to add predictors, e.g. CCS error, you may input the mzmatrix column names here.
 #However, a new model will have to be trained to work with the new predictors.
 [features]
-mz_correction = ['Weighted dot product', 'S/N average', 'isotope_error']
-rt_correction = ['Weighted dot product', 'S/N average', 'isotope_error', 'mz_error']
-predictor_model = ['Weighted dot product', 'S/N average', 'isotope_error', 'mz_error', 'rt_error']
+mz_correction = ['Simple dot product', 'S/N average', 'isotope_error']
+rt_correction = ['Simple dot product', 'S/N average', 'isotope_error', 'mz_error']
+predictor_model = ['Simple dot product', 'S/N average', 'isotope_error', 'mz_error', 'rt_error']
