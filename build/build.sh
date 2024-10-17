@@ -1,6 +1,10 @@
 #! /bin/bash
+#clean up the build directory
+rm -r release_stage
+mkdir release_stage
+
 #build linux executable version
-pyinstaller --onefile ../src/lipoCLEAN/__main__.py -n LipoCLEAN --paths ../src/lipoCLEAN/ --add-data ../src/lipoCLEAN/example_options.txt:.
+pyinstaller --onefile ../src/lipoCLEAN/__main__.py -n LipoCLEAN --paths ../src/lipoCLEAN/ --add-data ../src/lipoCLEAN/*.txt:.
 cp dist/LipoCLEAN release_stage/
 
 #train MSD4_QE_Pro_model
