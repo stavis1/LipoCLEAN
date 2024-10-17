@@ -24,7 +24,7 @@ ppm = false
 model = 'MSD4_QE_Pro_model'
 
 #If true a preexisting model and outputs will be overwritten.
-overwrite = false
+overwrite = true
 
 #Should be one of 'train' or 'infer'
 mode = 'infer'
