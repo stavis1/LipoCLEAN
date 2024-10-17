@@ -21,7 +21,7 @@ lowess_frac = 0.25
 ppm = false
 
 #Persistant model directory. If training this will be created for you.
-model = 'QE_Pro_model'
+model = 'MSD4_QE_Pro_model'
 
 #If true a preexisting model and outputs will be overwritten.
 overwrite = false

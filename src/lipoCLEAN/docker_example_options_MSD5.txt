@@ -23,7 +23,7 @@ ppm = false
 
 #Persistant model directory. If training this will be created for you.
 #The docker image contains two trained models that you can use.
-model = '../models/MSD5_QE_Pro_model'
+model = '/models/MSD5_QE_Pro_model'
 
 #If true a preexisting model and outputs will be overwritten.
 overwrite = false

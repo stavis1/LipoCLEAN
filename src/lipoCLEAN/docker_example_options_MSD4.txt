@@ -23,8 +23,8 @@ ppm = false
 
 #Persistant model directory. If training this will be created for you.
 #The docker image contains two trained models that you can use.
-model = '../models/MSD4_QE_Pro_model'
-#model = '../models/MSD4_TOF_model'
+model = '/models/MSD4_QE_Pro_model'
+#model = '/models/MSD4_TOF_model'
 
 #If true a preexisting model and outputs will be overwritten.
 overwrite = false
