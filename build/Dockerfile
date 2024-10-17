@@ -8,8 +8,9 @@ COPY *.* /
 
 #add the trained models
 RUN mkdir models
-COPY build/QE_Pro_model/ /models/QE_Pro_model/
-COPY build/TOF_model/ /models/TOF_model/
+COPY build/MSD4_QE_Pro_model/ /models/MSD4_QE_Pro_model/
+COPY build/MSD5_QE_Pro_model/ /models/MSD5_QE_Pro_model/
+COPY build/MSD4_TOF_model/ /models/MSD4_TOF_model/
 
 #set up python environment with virtualenv
 COPY build/requirements.txt /
