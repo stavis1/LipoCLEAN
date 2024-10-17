@@ -32,7 +32,7 @@ To set up the Conda environment for the tool:
 ## The Docker version
 The Docker container has trained models provided under /models/. To use these get the default options.txt from step below:
 1. Download the example analysis materials from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
-3. Extract `example_analysis.zip` and `MSD4_QE_Pro_model.zip` into the same folder. There should be no folders nested under `MSD4_QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
+3. Extract `example_analysis.zip`. All files from `example_analysis.zip` should be in the same folder.
 4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/docker_example_analysis_options.txt`
 5. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
 6. If you want the default docker options file run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print MSD4`
