@@ -6,12 +6,12 @@ There are three ways to install and run LipoCLEAN: as an executable, as a Docker
 ## The executable version
 This method requires no installation but it is somewhat slower than the other options.
 1. Download the executable for your operating system, the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
-2. Extract `example_analysis.zip` and `QE_Pro_model.zip` into the same folder. There should be no folders nested under `QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
+2. Extract `example_analysis.zip` and `MSD4_QE_Pro_model.zip` into the same folder. There should be no folders nested under `MSD4_QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
 3. Add `LipoCLEAN.exe` to this folder.
 4. Open the folder with these files in a terminal such as `cmd.exe` or `bash`.
-5. Run `lipoCLEAN.exe --options example_analysis_options.txt`. On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
+5. Run `LipoCLEAN.exe --options example_analysis_options.txt`. On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
 6. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
-7. If you want a default version of the options file run `lipoCLEAN.exe --print options.txt`.
+7. If you want a default version of the options file run `LipoCLEAN.exe --print MSD4`.
 8. To use the tool on other data edit the `options.txt` file.
 
 ## The Conda version
@@ -23,19 +23,19 @@ To set up the Conda environment for the tool:
 5. Navigate to the repository root.
 6. Run `pip install .`
 7. Download the trained model, and the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
-8. Extract `example_analysis.zip` and `QE_Pro_model.zip` into the same folder. There should be no folders nested under `QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
+8. Extract `example_analysis.zip` and `MSD4_QE_Pro_model.zip` into the same folder. There should be no folders nested under `MSD4_QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
 9. Run `python -m lipoCLEAN --options example_analysis_options.txt` On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
 10. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
-11. If you want a default version of the options file run `python -m lipoCLEAN --print options.txt`
+11. If you want a default version of the options file run `python -m lipoCLEAN --print MSD4`
 12. To use the tool on other data edit the `options.txt` file.
 
 ## The Docker version
 The Docker container has trained models provided under /models/. To use these get the default options.txt from step below:
 1. Download the example options file from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
-3. Extract `example_analysis.zip` and `QE_Pro_model.zip` into the same folder. There should be no folders nested under `QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
+3. Extract `example_analysis.zip` and `MSD4_QE_Pro_model.zip` into the same folder. There should be no folders nested under `MSD4_QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level folder.
 4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/docker_example_analysis_options.txt`
 5. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
-6. If you want the default docker options file run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print /data/options.txt`
+6. If you want the default docker options file run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print MSD4`
 7. To use the tool on other data edit the `options.txt` file.
 
 ## MS-Dial export settings for inference
@@ -69,6 +69,8 @@ Our tests have shown that a model will likely generalize to a family of instrume
 
 ## Other information
 
+Our tool supports both MS-DIAL 4 and 5. However, some columns were renamed and scaled differently between the two versions so a model trained on one version's data will not work with the other. Both the options file and the model are specific to a version of MS-DIAL. We provide separate default options files for each version that can be obtained with the `--print MSD4` and `--print MSD5` command line arguments, respectively.
+
 We have tested the tool on Windows 10 and Ubuntu 22.04. Although we have not tested this, we expect that the Docker version will work on Macs with intel chips and that the Conda version should work on any machine that has Conda installed.
 
 The `tests` and `build` directories in this repository are intended for internal development use only and the scripts they contain are not expected to work on other systems.
@@ -77,7 +79,7 @@ The `tests` and `build` directories in this repository are intended for internal
  1. Create and activate a Conda environment using `environments/build.yml`.
  2. Run `pip install .` at the repository root.
  3. Navigate to `build/`.
- 4. Run `pyinstaller --onefile ../src/lipoCLEAN/__main__.py -n LipoCLEAN --paths ../src/lipoCLEAN/ --add-data ../src/lipoCLEAN/example_options.txt:.`
+ 4. Run `pyinstaller --onefile ../src/lipoCLEAN/__main__.py -n LipoCLEAN --paths ../src/lipoCLEAN/ --add-data ../src/lipoCLEAN/*.txt:.`
  5. The executable will be found in a newly created `dist/` directory
 
 Disclaimer: We are not in any way associated with the developers of MS-DIAL, we are merely enthusiastic users of their software.
