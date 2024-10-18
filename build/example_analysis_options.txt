@@ -2,8 +2,8 @@
 working_directory = './'
 
 #A list of MS-DIAL mzexport files.
-data = ['QE_MTBLS5583_mzexport_positive_0_202456119.txt', 
-	'QE_MTBLS5583_mzexport_negative_andrewcpu.txt']
+data = ['QE_MTBLS5583_mzexport_positive.txt', 
+	'QE_MTBLS5583_mzexport_negative.txt']
 
 #Seed value for the rng used in train-test spliting.
 seed = 1
@@ -39,7 +39,7 @@ output = 'example_output'
 
 #Whether to make quality control plots. These will be stored in a subdirectory of output
 #Must be one of 'none', 'essential', or 'all'.
-QC_plots = 'all'
+QC_plots = 'essential'
 
 #What file types to export. Must be a list, even with one value.
 #Can be any of 'png', 'jpg', 'pdf', 'raw', 'rgba', 'svg', 'tiff', 'webp'
@@ -48,7 +48,7 @@ QC_plot_extensions = ['png']
 #Set the amount of information to be displayed in the console.
 #10 shows the most information 50 silences logging display. 
 #All logs will be saved to MSDpostprocess.log regardless of this setting.
-log_level = 10
+log_level = 20
 
 #Any entry without a finite, numerical value in these columns will be removed.
 required_cols = ['Dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']

@@ -6,8 +6,8 @@ data = ['build_data/LTQPro_LCO-Asp37_mzexport_negative_8-23-23.txt',
 	'build_data/LTQPro_LCO-Asp37_mzexport_positive_8-23-23.txt',
 	'build_data/LTQPro_LCO-Laccaria_mzexport_negative.txt',
 	'build_data/LTQPro_LCO-Laccaria_mzexport_positive.txt',
-	'build_data/QE_MTBLS5583_mzexport_negative_andrewcpu.txt', 
-	'build_data/QE_MTBLS5583_mzexport_positive_0_202456119.txt']
+	'build_data/QE_MTBLS5583_mzexport_negative.txt', 
+	'build_data/QE_MTBLS5583_mzexport_positive.txt']
 
 #Seed value for the rng used in train-test spliting.
 seed = 1
