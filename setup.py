@@ -9,7 +9,7 @@ Created on Tue May 28 13:14:54 2024
 import setuptools
 
 setuptools.setup(name="lipoCLEAN",
-                 version="0.0.0",
+                 version="0.1.5",
                  url="https://github.com/stavis1/lipoCLEAN",
                  author="Steven Tavis",
                  author_email="stavis@vols.utk.edu",
