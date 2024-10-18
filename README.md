@@ -16,7 +16,7 @@ This method requires no installation but it is somewhat slower than the other op
 
 ## The Conda version
 To set up the Conda environment for the tool:
-1. Download the LipoCLEAN git repository and navigate to the `environments` directory.
+1. Download the `Source code (zip)` from the [releases page](https://github.com/stavis1/lipoCLEAN/releases), extract the contents, and navigate to the `environments` directory in the extracted folder.
 2. Open the directory in a terminal such as `cmd.exe` or `bash`.
 3. Run `conda env create -p lipo_env --file lipoCLEAN.yml`
 4. Run `conda activate ./lipo_env`
