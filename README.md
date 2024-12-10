@@ -10,7 +10,7 @@ This method requires no installation but it is somewhat slower than the other op
 3. Add `LipoCLEAN.exe` to this folder.
 4. Open the folder with these files in a terminal such as `cmd.exe` or `bash`.
 5. Run `LipoCLEAN.exe --options example_analysis_options.txt`. On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
-6. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
+6. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results. A log file containing information about the run named `LipoCLEAN.log` will also be generated.
 7. If you want a default version of the options file run `LipoCLEAN.exe --print MSD4`.
 8. To use the tool on other data edit the `options.txt` file.
 
@@ -25,7 +25,7 @@ To set up the Conda environment for the tool:
 7. Download `MSD4_QE_Pro_model.zip`, and `example_analysis.zip` from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
 8. Extract `example_analysis.zip` and `MSD4_QE_Pro_model.zip` into a single analysis folder. There should be no folders nested under `MSD4_QE_Pro_model/` and all files from `example_analysis.zip` should be in the top level of the analysis folder (the folder containing `MSD4_QE_Pro_model`).
 9. Run `python -m lipoCLEAN --options example_analysis_options.txt` in the analysis folder. On some systems the warning `No module named 'brainpy._c.composition'` will be displayed. This is not an error and does not impact the running of the tool.
-10. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
+10. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results. A log file containing information about the run named `LipoCLEAN.log` will also be generated.
 11. If you want a default version of the options file run `python -m lipoCLEAN --print MSD4`
 12. To use the tool on other data edit the `options.txt` file.
 
@@ -35,7 +35,7 @@ The Docker container has trained models provided under `/models/`. To use these 
 2. Download `example_analysis.zip` from the [releases page](https://github.com/stavis1/lipoCLEAN/releases).
 3. Extract `example_analysis.zip`. All files from `example_analysis.zip` should be in the same folder.
 4. Run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --options /data/docker_example_analysis_options.txt`
-5. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results.
+5. The results will be in a folder named `example_output/` the `example_output/QC/` folder contains several plots to assess the quality of the results. A log file containing information about the run named `LipoCLEAN.log` will also be generated.
 6. If you want the default docker options file run `docker run --rm -v /path/to/your/data/:/data/ stavisvols/lipoclean python -m lipoCLEAN --print MSD4`
 7. To use the tool on other data edit the `options.txt` file.
 
