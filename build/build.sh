@@ -26,10 +26,11 @@ docker push stavisvols/lipoclean
 #make a zip file for an example analysis
 mkdir tmp
 cd tmp
+cp -r ../MSD4_QE_Pro_model ./
 ln ../build_data/QE_MTBLS5583_mzexport_* ./
 ln ../example_analysis_options.txt ./
 ln ../docker_example_analysis_options.txt ./
-zip ../release_stage/example_analysis.zip *
+zip -r ../release_stage/example_analysis.zip *
 cd ../
 rm -r tmp
 
