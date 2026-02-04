@@ -11,6 +11,6 @@ dependencies:
   - statsmodels=0.14.1
   - pyinstaller=6.7.0
   - pip:
-      - brain-isotopic-distribution==1.5.16
+      - brain-isotopic-distribution==1.5.19
       - linear-tree==0.3.5
       - gdown
