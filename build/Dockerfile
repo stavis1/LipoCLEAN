@@ -12,9 +12,10 @@ COPY build/MSD4_QE_Pro_model/ /models/MSD4_QE_Pro_model/
 COPY build/MSD5_QE_Pro_model/ /models/MSD5_QE_Pro_model/
 COPY build/MSD4_TOF_model/ /models/MSD4_TOF_model/
 
-#set up python environment with virtualenv
+#set up python environment
+RUN apt update -y && apt upgrade -y && apt install build-essential -y
 COPY build/requirements.txt /
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --default-timeout=100
 RUN pip install .
 
 #we want --print to return a different default options for the docker version
