@@ -43,7 +43,7 @@ def filter_data(lipid_data, args):
     #first pass filter for extremely low confidence IDs
     bad_idx = []
     #must have MS2 data for ID, matches based on RT and exact mass are not considered valid
-    bad_idx.extend(lipid_data[np.logical_not(lipid_data['m/z matched'])].index)
+    bad_idx.extend(lipid_data[np.logical_not(lipid_data['MS/MS assigned'])].index)
     #MS-Dial annotates some features that don't have a formula, we do not consider this an ID
     bad_idx.extend(lipid_data[[(('D' in f) or ('i' in f)) if type(f) == str else True for f in lipid_data['Formula']]].index) #this breaks brainpy
     #features with an unknown ontology are also not considered IDs
@@ -72,6 +72,10 @@ def split_index(lipid_data, args):
                            replace = False)
     test_idx = set(lipid_data.index).difference(train_idx)
     return (np.array(train_idx), np.array(list(test_idx)))
+
+def apply_blacklist(lipid_data, args):
+    lipid_data['class'] = [-1 if c == 1 and l in args.blacklist else c for c,l in zip(lipid_data['class'], lipid_data['Metabolite name'])]
+    return lipid_data
 
 def write_data(lipid_data, args):
     #move newly created columns to the beginning of the table

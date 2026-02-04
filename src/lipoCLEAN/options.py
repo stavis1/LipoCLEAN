@@ -44,7 +44,7 @@ class options:
             self.min_rt = {f:r for f,r in zip(self.data, self.min_rt)}
         else:
             self.min_rt = {f:self.min_rt for f in self.data}
-        
+         
         #set up logger
         logging.captureWarnings(True)
         self.logs = logging.getLogger('lipoCLEAN')
@@ -84,7 +84,14 @@ class options:
             example_options = os.path.join(resolved_path, f'example_options_{version}.txt')
         target_file = os.path.join(print_path, 'options.txt')
         shutil.copy2(example_options, target_file)
-
+    
+    def load_blacklist(self):
+        if self.blacklist_file:
+            with open(self.blacklist_file, 'r') as blacklist_file:
+                self.blacklist = {l for l in blacklist_file.read().strip().split('\n')}
+        else:
+            self.blacklist = {}
+                
 def validate_inputs(args):
     #check that the options toml is valid
     required = ['working_directory',
@@ -102,7 +109,8 @@ def validate_inputs(args):
                 'QC_plot_extensions',
                 'log_level',
                 'cutoffs',
-                'features']
+                'features',
+                'blacklist_file']
     problems = [r for r in required if not r in args.__dict__.keys()]
     if problems:
         args.logs.error('Required settings not found in options file:\n' + '\n'.join(problems))
@@ -114,6 +122,11 @@ def validate_inputs(args):
     if args.mode == 'infer' and not os.path.exists(model):
         args.logs.error(f'Attempting inference without a pre-trained model, expected {os.path.abspath(model)}.')
         raise InputError()
+    
+    if args.blacklist_file:
+        blacklist_file = os.path.join(args.working_directory, args.blacklist_file)
+        if not os.path.exists(blacklist_file):
+            args.logs.error(f'a blacklist file was expected at {blacklist_file} but no file was found.')
     
     #prevent overwriting files
     if not args.overwrite:
@@ -162,4 +175,4 @@ def setup_workspace(args):
             if not os.path.exists(perfile_path):
                 os.mkdir(perfile_path)
 
-        
+    args.load_blacklist()

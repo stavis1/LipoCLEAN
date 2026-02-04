@@ -8,7 +8,7 @@ Created on Wed Apr  3 10:14:41 2024
 from lipoCLEAN.options import options, setup_workspace, validate_inputs
 args = options()
 
-from lipoCLEAN.utilities import read_files, filter_data, split_index, write_data
+from lipoCLEAN.utilities import read_files, filter_data, split_index, write_data, apply_blacklist
 from lipoCLEAN.models import mz_correction, rt_correction, predictor_model, add_isotope_error
 from lipoCLEAN.QC import plot_mz_QC, plot_rt_QC, plot_final_QC, plot_pairwise_scores
 
@@ -55,6 +55,7 @@ else:
     lipid_data = rt_model.correct_data(lipid_data)
 
 lipid_data = final_model.classify(lipid_data)
+lipid_data = apply_blacklist(lipid_data, args)
 write_data(lipid_data, args)
 
 if args.QC_plots != 'none':
