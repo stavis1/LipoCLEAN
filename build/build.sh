@@ -36,4 +36,4 @@ rm -r tmp
 
 #download the windows executable from google drive
 gdown --fuzzy https://drive.google.com/drive/folders/1XIpG6pekXhwBAJUqpOSYzM--_vLh4i9_ --folder
-cp lipoCLEAN/LipoCLEAN.exe release_stage/
+cp LipoCLEAN/LipoCLEAN.exe release_stage/
