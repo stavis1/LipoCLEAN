@@ -1,7 +1,5 @@
 channels:
   - conda-forge
-  - anaconda
-  - main
 dependencies:
   - matplotlib=3.8.4
   - numpy=1.24.4
