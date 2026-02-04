@@ -53,6 +53,11 @@ log_level = 20
 #Any entry without a finite, numerical value in these columns will be removed.
 required_cols = ['Dot product', 'S/N average', 'Average Rt(min)', 'Reference m/z']
 
+#The path to a blacklist file. This is a newline separated list of lipid names. 
+#Any lipid name present in this file that passes the positive threshold will be placed in the needs_reanalysis file instead. 
+#Leave this option false if no blacklist is needed. 
+blacklist_file = false
+
 #The component models of this tool score putative IDs between 0 and 1.
 #These cutoffs determine the score threshold above which an ID is considered positive.
 [cutoffs]
