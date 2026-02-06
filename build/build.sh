@@ -1,6 +1,13 @@
 #! /bin/bash
 #clean up the build directory
+rm -r build
+rm -r dist
+rm -r bdist*
+rm -r lib
+rm -r LipoCLEAN
+rm -r MSD*
 rm -r release_stage
+rm *.log
 mkdir release_stage
 
 #build linux executable version
