@@ -61,8 +61,8 @@ blacklist_file = false
 #The component models of this tool score putative IDs between 0 and 1.
 #These cutoffs determine the score threshold above which an ID is considered positive.
 [cutoffs]
-mz_correction = 0.75
-rt_correction = 0.75
+mz_correction = 0.5
+rt_correction = 0.5
 #Below the first element final predictions are classed negative.
 #Above the second they're classed positive.
 #In between they're classed needs_reanalysis.
